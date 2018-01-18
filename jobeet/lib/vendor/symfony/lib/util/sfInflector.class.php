@@ -27,11 +27,8 @@ class sfInflector
    */
   public static function camelize($lower_case_and_underscored_word)
   {
-    $tmp = $lower_case_and_underscored_word;
-    $tmp = sfToolkit::pregtr($tmp, array('#/(.?)#e'    => "'::'.strtoupper('\\1')",
-                                         '/(^|_|-)+(.)/e' => "strtoupper('\\2')"));
 
-    return $tmp;
+      return str_replace(' ','',ucwords(preg_replace('/[^A-Z^a-z^0-9]+/',' ',$lower_case_and_underscored_word)));
   }
 
   /**

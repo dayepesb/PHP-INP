@@ -35,6 +35,7 @@
         <small>posted on <?php echo $job->getCreatedAt('m/d/Y') ?></small>
     </div>
 
+
     <div style="padding: 20px 0">
         <a href="<?php echo url_for('job/edit?id='.$job->getId()) ?>">
             Edit
