@@ -16,7 +16,7 @@
  * @package    symfony
  * @subpackage generator
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfPropelFormFilterGenerator.class.php 33137 2011-10-18 13:05:25Z fabien $
+ * @version    SVN: $Id: sfPropelFormFilterGenerator.class.php 16976 2009-04-04 12:47:44Z fabien $
  */
 class sfPropelFormFilterGenerator extends sfPropelFormGenerator
 {
@@ -60,13 +60,15 @@ class sfPropelFormFilterGenerator extends sfPropelFormGenerator
 
     $this->loadBuilders();
 
+    $this->dbMap = Propel::getDatabaseMap($this->params['connection']);
+
     // create the project base class for all forms
-    $file = sfConfig::get('sf_lib_dir').'/filter/BaseFormFilterPropel.class.php';
+    $file = sfConfig::get('sf_lib_dir').'/filter/base/BaseFormFilterPropel.class.php';
     if (!file_exists($file))
     {
-      if (!is_dir($directory = dirname($file)))
+      if (!is_dir(sfConfig::get('sf_lib_dir').'/filter/base'))
       {
-        mkdir($directory, 0777, true);
+        mkdir(sfConfig::get('sf_lib_dir').'/filter/base', 0777, true);
       }
 
       file_put_contents($file, $this->evalTemplate('sfPropelFormFilterBaseTemplate.php'));
@@ -75,12 +77,6 @@ class sfPropelFormFilterGenerator extends sfPropelFormGenerator
     // create a form class for every Propel class
     foreach ($this->dbMap->getTables() as $tableName => $table)
     {
-      $behaviors = $table->getBehaviors();
-      if (isset($behaviors['symfony']['filter']) && 'false' === $behaviors['symfony']['filter'])
-      {
-        continue;
-      }
-
       $this->table = $table;
 
       // find the package to store filter forms in the same directory as the model classes
@@ -148,7 +144,7 @@ class sfPropelFormFilterGenerator extends sfPropelFormGenerator
   {
     $options = array();
 
-    $withEmpty = $column->isNotNull() && !$column->isForeignKey() ? array("'with_empty' => false") : array();
+    $withEmpty = sprintf('\'with_empty\' => %s', $column->isNotNull() ? 'false' : 'true');
     switch ($column->getType())
     {
       case PropelColumnTypes::BOOLEAN:
@@ -158,10 +154,8 @@ class sfPropelFormFilterGenerator extends sfPropelFormGenerator
       case PropelColumnTypes::TIME:
       case PropelColumnTypes::TIMESTAMP:
         $options[] = "'from_date' => new sfWidgetFormDate(), 'to_date' => new sfWidgetFormDate()";
-        $options = array_merge($options, $withEmpty);
+        $options[] = $withEmpty;
         break;
-      default:
-        $options = array_merge($options, $withEmpty);
     }
 
     if ($column->isForeignKey())

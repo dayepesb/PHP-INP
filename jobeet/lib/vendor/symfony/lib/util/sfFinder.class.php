@@ -26,7 +26,7 @@
  * @package    symfony
  * @subpackage util
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfFinder.class.php 32891 2011-08-05 07:48:34Z fabien $
+ * @version    SVN: $Id: sfFinder.class.php 17857 2009-05-01 21:17:20Z FabianLange $
  */
 class sfFinder
 {
@@ -49,7 +49,7 @@ class sfFinder
    * Finder will descend at most $level levels of directories below the starting point.
    *
    * @param  int $level
-   * @return sfFinder current sfFinder object
+   * @return object current sfFinder object
    */
   public function maxdepth($level)
   {
@@ -64,7 +64,7 @@ class sfFinder
    * Finder will start applying tests at level $level.
    *
    * @param  int $level
-   * @return sfFinder current sfFinder object
+   * @return object current sfFinder object
    */
   public function mindepth($level)
   {
@@ -82,37 +82,28 @@ class sfFinder
    * Sets the type of elements to returns.
    *
    * @param  string $name  directory or file or any (for both file and directory)
-   * @return sfFinder new sfFinder object
+   * @return object new sfFinder object
    */
   public static function type($name)
   {
     $finder = new self();
     return $finder->setType($name);
   }
-  /**
-   * Sets the type of elements to returns.
-   *
-   * @param  string $name  directory or file or any (for both file and directory)
-   * @return sfFinder Current object
-   */
+
   public function setType($name)
   {
-    $name = strtolower($name);
-
-    if (substr($name, 0, 3) === 'dir')
+    if (strtolower(substr($name, 0, 3)) == 'dir')
     {
       $this->type = 'directory';
-
-      return $this;
     }
-    if ($name === 'any')
+    else if (strtolower($name) == 'any')
     {
       $this->type = 'any';
-
-      return $this;
     }
-
+    else
+    {
       $this->type = 'file';
+    }
 
     return $this;
   }
@@ -122,19 +113,21 @@ class sfFinder
    */
   protected function to_regex($str)
   {
-    if (preg_match('/^(!)?([^a-zA-Z0-9\\\\]).+?\\2[ims]?$/', $str))
+    if ($str{0} == '/' && $str{strlen($str) - 1} == '/')
     {
       return $str;
     }
-
-    return sfGlobToRegex::glob_to_regex($str);
+    else
+    {
+      return sfGlobToRegex::glob_to_regex($str);
+    }
   }
 
   protected function args_to_array($arg_list, $not = false)
   {
     $list = array();
-    $nbArgList = count($arg_list);
-    for ($i = 0; $i < $nbArgList; $i++)
+
+    for ($i = 0; $i < count($arg_list); $i++)
     {
       if (is_array($arg_list[$i]))
       {
@@ -162,7 +155,7 @@ class sfFinder
    * $finder->name('test.php')
    *
    * @param  list   a list of patterns, globs or strings
-   * @return sfFinder Current object
+   * @return object current sfFinder object
    */
   public function name()
   {
@@ -177,7 +170,7 @@ class sfFinder
    *
    * @see    ->name()
    * @param  list   a list of patterns, globs or strings
-   * @return sfFinder Current object
+   * @return object current sfFinder object
    */
   public function not_name()
   {
@@ -195,13 +188,12 @@ class sfFinder
    * $finder->size(4);
    *
    * @param  list   a list of comparison strings
-   * @return sfFinder Current object
+   * @return object current sfFinder object
    */
   public function size()
   {
     $args = func_get_args();
-    $numargs = count($args);
-    for ($i = 0; $i < $numargs; $i++)
+    for ($i = 0; $i < count($args); $i++)
     {
       $this->sizes[] = new sfNumberCompare($args[$i]);
     }
@@ -213,7 +205,7 @@ class sfFinder
    * Traverses no further.
    *
    * @param  list   a list of patterns, globs to match
-   * @return sfFinder Current object
+   * @return object current sfFinder object
    */
   public function prune()
   {
@@ -227,7 +219,7 @@ class sfFinder
    * Discards elements that matches.
    *
    * @param  list   a list of patterns, globs to match
-   * @return sfFinder Current object
+   * @return object current sfFinder object
    */
   public function discard()
   {
@@ -244,7 +236,7 @@ class sfFinder
    *
    * @param  bool   $ignore  falase when version control directories shall be included (default is true)
    *
-   * @return sfFinder Current object
+   * @return object current  sfFinder object
    */
   public function ignore_version_control($ignore = true)
   {
@@ -256,7 +248,7 @@ class sfFinder
   /**
    * Returns files and directories ordered by name
    *
-   * @return sfFinder Current object
+   * @return object current sfFinder object
    */
   public function sort_by_name()
   {
@@ -268,7 +260,7 @@ class sfFinder
   /**
    * Returns files and directories ordered by type (directories before files), then by name
    *
-   * @return sfFinder Current object
+   * @return object current sfFinder object
    */
   public function sort_by_type()
   {
@@ -286,19 +278,18 @@ class sfFinder
    * $finder->exec(array($object, 'mymethod'));
    *
    * @param  mixed  function or method to call
-   * @return sfFinder Current object
+   * @return object current sfFinder object
    */
   public function exec()
   {
     $args = func_get_args();
-    $numargs = count($args);
-    for ($i = 0; $i < $numargs; $i++)
+    for ($i = 0; $i < count($args); $i++)
     {
       if (is_array($args[$i]) && !method_exists($args[$i][0], $args[$i][1]))
       {
         throw new sfException(sprintf('method "%s" does not exist for object "%s".', $args[$i][1], $args[$i][0]));
       }
-      if (!is_array($args[$i]) && !function_exists($args[$i]))
+      else if (!is_array($args[$i]) && !function_exists($args[$i]))
       {
         throw new sfException(sprintf('function "%s" does not exist.', $args[$i]));
       }
@@ -312,7 +303,7 @@ class sfFinder
   /**
    * Returns relative paths for all files and directories.
    *
-   * @return sfFinder Current object
+   * @return object current sfFinder object
    */
   public function relative()
   {
@@ -324,7 +315,7 @@ class sfFinder
   /**
    * Symlink following.
    *
-   * @return sfFinder Current object
+   * @return object current sfFinder object
    */
   public function follow_link()
   {
@@ -355,7 +346,7 @@ class sfFinder
     // first argument is an array?
     $numargs  = func_num_args();
     $arg_list = func_get_args();
-    if ($numargs === 1 && is_array($arg_list[0]))
+    if ($numargs == 1 && is_array($arg_list[0]))
     {
       $arg_list = $arg_list[0];
       $numargs  = count($arg_list);
@@ -382,13 +373,13 @@ class sfFinder
 
       if ($this->relative)
       {
-        $new_files = preg_replace('#^'.preg_quote(rtrim($dir, '/'), '#').'/#', '', $new_files);
+        $new_files = str_replace(rtrim($dir, '/').'/', '', $new_files);
       }
 
       $files = array_merge($files, $new_files);
     }
 
-    if ($this->sort === 'name')
+    if ($this->sort == 'name')
     {
       sort($files);
     }
@@ -413,7 +404,7 @@ class sfFinder
     $files = array();
     $temp_files = array();
     $temp_folders = array();
-    if (is_dir($dir) && is_readable($dir))
+    if (is_dir($dir))
     {
       $current_dir = opendir($dir);
       while (false !== $entryname = readdir($current_dir))
@@ -428,13 +419,13 @@ class sfFinder
 
         if (is_dir($current_entry))
         {
-          if ($this->sort === 'type')
+          if ($this->sort == 'type')
           {
             $temp_folders[$entryname] = $current_entry;
           }
           else
           {
-            if (($this->type === 'directory' || $this->type === 'any') && ($depth >= $this->mindepth) && !$this->is_discarded($dir, $entryname) && $this->match_names($dir, $entryname) && $this->exec_ok($dir, $entryname))
+            if (($this->type == 'directory' || $this->type == 'any') && ($depth >= $this->mindepth) && !$this->is_discarded($dir, $entryname) && $this->match_names($dir, $entryname) && $this->exec_ok($dir, $entryname))
             {
               $files[] = $current_entry;
             }
@@ -447,9 +438,9 @@ class sfFinder
         }
         else
         {
-          if (($this->type !== 'directory' || $this->type === 'any') && ($depth >= $this->mindepth) && !$this->is_discarded($dir, $entryname) && $this->match_names($dir, $entryname) && $this->size_ok($dir, $entryname) && $this->exec_ok($dir, $entryname))
+          if (($this->type != 'directory' || $this->type == 'any') && ($depth >= $this->mindepth) && !$this->is_discarded($dir, $entryname) && $this->match_names($dir, $entryname) && $this->size_ok($dir, $entryname) && $this->exec_ok($dir, $entryname))
           {
-            if ($this->sort === 'type')
+            if ($this->sort == 'type')
             {
               $temp_files[] = $current_entry;
             }
@@ -461,12 +452,12 @@ class sfFinder
         }
       }
 
-      if ($this->sort === 'type')
+      if ($this->sort == 'type')
       {
         ksort($temp_folders);
         foreach($temp_folders as $entryname => $current_entry)
         {
-          if (($this->type === 'directory' || $this->type === 'any') && ($depth >= $this->mindepth) && !$this->is_discarded($dir, $entryname) && $this->match_names($dir, $entryname) && $this->exec_ok($dir, $entryname))
+          if (($this->type == 'directory' || $this->type == 'any') && ($depth >= $this->mindepth) && !$this->is_discarded($dir, $entryname) && $this->match_names($dir, $entryname) && $this->exec_ok($dir, $entryname))
           {
             $files[] = $current_entry;
           }
@@ -491,22 +482,33 @@ class sfFinder
   {
     if (!count($this->names)) return true;
 
-    // Flags indicating that there was attempts to match
-    // at least one "not_name" or "name" rule respectively
-    // to following variables:
+    // we must match one "not_name" rules to be ko
     $one_not_name_rule = false;
-    $one_name_rule = false;
-
     foreach ($this->names as $args)
     {
       list($not, $regex) = $args;
-      $not ? $one_not_name_rule = true : $one_name_rule = true;
-      if (preg_match($regex, $entry))
+      if ($not)
       {
-        // We must match ONLY ONE "not_name" or "name" rule:
-        // if "not_name" rule matched then we return "false"
-        // if "name" rule matched then we return "true"
-        return $not ? false : true;
+        $one_not_name_rule = true;
+        if (preg_match($regex, $entry))
+        {
+          return false;
+        }
+      }
+    }
+
+    $one_name_rule = false;
+    // we must match one "name" rules to be ok
+    foreach ($this->names as $args)
+    {
+      list($not, $regex) = $args;
+      if (!$not)
+      {
+        $one_name_rule = true;
+        if (preg_match($regex, $entry))
+        {
+          return true;
+        }
       }
     }
 
@@ -522,12 +524,15 @@ class sfFinder
     {
       return false;
     }
-    return true;
+    else
+    {
+      return true;
+    }
   }
 
   protected function size_ok($dir, $entry)
   {
-    if (0 === count($this->sizes)) return true;
+    if (!count($this->sizes)) return true;
 
     if (!is_file($dir.DIRECTORY_SEPARATOR.$entry)) return true;
 
@@ -542,7 +547,7 @@ class sfFinder
 
   protected function is_pruned($dir, $entry)
   {
-    if (0 === count($this->prunes)) return false;
+    if (!count($this->prunes)) return false;
 
     foreach ($this->prunes as $args)
     {
@@ -555,7 +560,7 @@ class sfFinder
 
   protected function is_discarded($dir, $entry)
   {
-    if (0 === count($this->discards)) return false;
+    if (!count($this->discards)) return false;
 
     foreach ($this->discards as $args)
     {
@@ -568,7 +573,7 @@ class sfFinder
 
   protected function exec_ok($dir, $entry)
   {
-    if (0 === count($this->execs)) return true;
+    if (!count($this->execs)) return true;
 
     foreach ($this->execs as $exec)
     {
@@ -580,10 +585,10 @@ class sfFinder
 
   public static function isPathAbsolute($path)
   {
-    if ($path{0} === '/' || $path{0} === '\\' ||
+    if ($path{0} == '/' || $path{0} == '\\' ||
         (strlen($path) > 3 && ctype_alpha($path{0}) &&
-         $path{1} === ':' &&
-         ($path{2} === '\\' || $path{2} === '/')
+         $path{1} == ':' &&
+         ($path{2} == '\\' || $path{2} == '/')
         )
        )
     {
@@ -617,7 +622,7 @@ class sfFinder
  * @author     Richard Clamp <richardc@unixbeard.net> perl version
  * @copyright  2004-2005 Fabien Potencier <fabien.potencier@gmail.com>
  * @copyright  2002 Richard Clamp <richardc@unixbeard.net>
- * @version    SVN: $Id: sfFinder.class.php 32891 2011-08-05 07:48:34Z fabien $
+ * @version    SVN: $Id: sfFinder.class.php 17857 2009-05-01 21:17:20Z FabianLange $
  */
 class sfGlobToRegex
 {
@@ -646,13 +651,12 @@ class sfGlobToRegex
     $escaping = false;
     $in_curlies = 0;
     $regex = '';
-    $sizeGlob = strlen($glob);
-    for ($i = 0; $i < $sizeGlob; $i++)
+    for ($i = 0; $i < strlen($glob); $i++)
     {
       $car = $glob[$i];
       if ($first_byte)
       {
-        if (self::$strict_leading_dot && $car !== '.')
+        if (self::$strict_leading_dot && $car != '.')
         {
           $regex .= '(?=[^\.])';
         }
@@ -660,42 +664,42 @@ class sfGlobToRegex
         $first_byte = false;
       }
 
-      if ($car === '/')
+      if ($car == '/')
       {
         $first_byte = true;
       }
 
-      if ($car === '.' || $car === '(' || $car === ')' || $car === '|' || $car === '+' || $car === '^' || $car === '$')
+      if ($car == '.' || $car == '(' || $car == ')' || $car == '|' || $car == '+' || $car == '^' || $car == '$')
       {
         $regex .= "\\$car";
       }
-      elseif ($car === '*')
+      else if ($car == '*')
       {
-        $regex .= ($escaping ? '\\*' : (self::$strict_wildcard_slash ? '[^/]*' : '.*'));
+        $regex .= ($escaping ? "\\*" : (self::$strict_wildcard_slash ? "[^/]*" : ".*"));
       }
-      elseif ($car === '?')
+      else if ($car == '?')
       {
-        $regex .= ($escaping ? '\\?' : (self::$strict_wildcard_slash ? '[^/]' : '.'));
+        $regex .= ($escaping ? "\\?" : (self::$strict_wildcard_slash ? "[^/]" : "."));
       }
-      elseif ($car === '{')
+      else if ($car == '{')
       {
-        $regex .= ($escaping ? '\\{' : '(');
+        $regex .= ($escaping ? "\\{" : "(");
         if (!$escaping) ++$in_curlies;
       }
-      elseif ($car === '}' && $in_curlies)
+      else if ($car == '}' && $in_curlies)
       {
-        $regex .= ($escaping ? '}' : ')');
+        $regex .= ($escaping ? "}" : ")");
         if (!$escaping) --$in_curlies;
       }
-      elseif ($car === ',' && $in_curlies)
+      else if ($car == ',' && $in_curlies)
       {
-        $regex .= ($escaping ? ',' : '|');
+        $regex .= ($escaping ? "," : "|");
       }
-      elseif ($car === '\\')
+      else if ($car == "\\")
       {
         if ($escaping)
         {
-          $regex .= '\\\\';
+          $regex .= "\\\\";
           $escaping = false;
         }
         else
@@ -708,11 +712,12 @@ class sfGlobToRegex
       else
       {
         $regex .= $car;
+        $escaping = false;
       }
       $escaping = false;
     }
 
-    return '#^'.$regex.'$#';
+    return "#^$regex$#";
   }
 }
 
@@ -739,7 +744,7 @@ class sfGlobToRegex
  * @copyright  2004-2005 Fabien Potencier <fabien.potencier@gmail.com>
  * @copyright  2002 Richard Clamp <richardc@unixbeard.net>
  * @see        http://physics.nist.gov/cuu/Units/binary.html
- * @version    SVN: $Id: sfFinder.class.php 32891 2011-08-05 07:48:34Z fabien $
+ * @version    SVN: $Id: sfFinder.class.php 17857 2009-05-01 21:17:20Z FabianLange $
  */
 class sfNumberCompare
 {
@@ -759,31 +764,31 @@ class sfNumberCompare
 
     $target = array_key_exists(2, $matches) ? $matches[2] : '';
     $magnitude = array_key_exists(3, $matches) ? $matches[3] : '';
-    if (strtolower($magnitude) === 'k')  $target *=           1000;
-    if (strtolower($magnitude) === 'ki') $target *=           1024;
-    if (strtolower($magnitude) === 'm')  $target *=        1000000;
-    if (strtolower($magnitude) === 'mi') $target *=      1024*1024;
-    if (strtolower($magnitude) === 'g')  $target *=     1000000000;
-    if (strtolower($magnitude) === 'gi') $target *= 1024*1024*1024;
+    if (strtolower($magnitude) == 'k')  $target *=           1000;
+    if (strtolower($magnitude) == 'ki') $target *=           1024;
+    if (strtolower($magnitude) == 'm')  $target *=        1000000;
+    if (strtolower($magnitude) == 'mi') $target *=      1024*1024;
+    if (strtolower($magnitude) == 'g')  $target *=     1000000000;
+    if (strtolower($magnitude) == 'gi') $target *= 1024*1024*1024;
 
     $comparison = array_key_exists(1, $matches) ? $matches[1] : '==';
-    if ($comparison === '==' || $comparison == '')
+    if ($comparison == '==' || $comparison == '')
     {
       return ($number == $target);
     }
-    if ($comparison === '>')
+    else if ($comparison == '>')
     {
       return ($number > $target);
     }
-    if ($comparison === '>=')
+    else if ($comparison == '>=')
     {
       return ($number >= $target);
     }
-    if ($comparison === '<')
+    else if ($comparison == '<')
     {
       return ($number < $target);
     }
-    if ($comparison === '<=')
+    else if ($comparison == '<=')
     {
       return ($number <= $target);
     }

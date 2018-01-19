@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage plugin
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfPearRestPlugin.class.php 31396 2010-11-15 16:08:26Z fabien $
+ * @version    SVN: $Id: sfPearRestPlugin.class.php 14830 2009-01-17 09:31:34Z dwhittle $
  */
 class sfPearRestPlugin extends sfPearRest11
 {
@@ -63,7 +63,6 @@ class sfPearRestPlugin extends sfPearRest11
     }
 
     $mirror = $this->config->get('preferred_mirror', null, $channelName);
-
     if (!$channel->supportsREST($mirror))
     {
       throw new sfPluginRestException(sprintf('The channel "%s" does not support the REST protocol', $channelName));
@@ -89,13 +88,13 @@ class sfPearRestPlugin extends sfPearRest11
       throw new sfPluginRestException(sprintf('Unable to get plugin licence information for plugin "%s": %s', $plugin, $info->getMessage())); 
     }
 
-    if (null === $info)
+    if (is_null($info))
     {
       // plugin does not exist
       return null;
     }
 
-    if (!isset($info['license']) || null === $info['license'])
+    if (!isset($info['license']) || is_null($info['license']))
     {
       throw new Exception('No license found for this plugin!');
     }
@@ -208,7 +207,7 @@ class sfPearRestPlugin extends sfPearRest11
    */
   protected function getAllowedStates($stability = null)
   {
-    $stability = null === $stability ? $this->config->get('preferred_state', null, $this->channel) : $stability;
+    $stability = is_null($stability) ? $this->config->get('preferred_state', null, $this->channel) : $stability;
 
     return array_flip($this->betterStates($stability, true));
   }

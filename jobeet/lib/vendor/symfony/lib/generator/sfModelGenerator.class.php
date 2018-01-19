@@ -70,16 +70,6 @@ abstract class sfModelGenerator extends sfGenerator
   }
 
   /**
-   * Gets the actions base class for the generated module.
-   *
-   * @return string The actions base class
-   */
-  public function getActionsBaseClass()
-  {
-    return isset($this->params['actions_base_class']) ? $this->params['actions_base_class'] : 'sfActions';
-  }
-
-  /**
    * Gets the class name for current model.
    *
    * @return string
@@ -324,9 +314,9 @@ EOF;
    */
   public function getFormObject()
   {
-    if (null === $this->formObject)
+    if (is_null($this->formObject))
     {
-      $class = null === $this->configuration ? $this->getModelClass().'Form' : $this->configuration->getFormClass();
+      $class = is_null($this->configuration) ? $this->getModelClass().'Form' : $this->configuration->getFormClass();
 
       $this->formObject = new $class();
     }

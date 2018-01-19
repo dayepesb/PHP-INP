@@ -13,7 +13,7 @@
  * {@link http://prado.sourceforge.net/}
  *
  * @author     Wei Zhuo <weizhuo[at]gmail[dot]com>
- * @version    $Id: sfCultureInfo.class.php 33361 2012-03-08 13:48:42Z fabien $
+ * @version    $Id: sfCultureInfo.class.php 22878 2009-10-08 16:24:36Z fabien $
  * @package    symfony
  * @subpackage i18n
  */
@@ -310,7 +310,7 @@ class sfCultureInfo
 
         if (isset($data['__ALIAS']))
         {
-          $this->loadCultureData($data['__ALIAS']);
+          $this->loadCultureData($data['__ALIAS'][0]);
         }
         unset($data);
       }
@@ -365,7 +365,7 @@ class sfCultureInfo
       {
         if ($merge)
         {
-          $result = $this->array_add($result, $info);
+          $result = array_merge($info, $result);
         }
         else
         {
@@ -375,30 +375,6 @@ class sfCultureInfo
     }
 
     return $result;
-  }
-
-  /**
-   * Adds an array to an already existing array.
-   * If an element is already existing in array1 it is not overwritten.
-   * If this element is an array this logic will be applied recursively.
-   */
-  private function array_add($array1, $array2)
-  {
-    foreach ($array2 as $key => $value)
-    {
-      if (isset($array1[$key]))
-      {
-        if(is_array($array1[$key]) && is_array($value))
-        {
-          $array1[$key] = $this->array_add($array1[$key], $value);
-        }
-      }
-      else
-      {
-        $array1[$key] = $value;
-      }
-    }
-    return $array1;
   }
 
   /**
@@ -449,7 +425,7 @@ class sfCultureInfo
    */
   public function getDateTimeFormat()
   {
-    if (null === $this->dateTimeFormat)
+    if (is_null($this->dateTimeFormat))
     {
       $calendar = $this->getCalendar();
       $info = $this->findInfo("calendar/{$calendar}", true);
@@ -476,7 +452,9 @@ class sfCultureInfo
    */
   public function getCalendar()
   {
-    return $this->findInfo('calendar/default');
+    $info = $this->findInfo('calendar/default');
+
+    return $info[0];
   }
 
   /**
@@ -494,11 +472,11 @@ class sfCultureInfo
     $region = $this->findInfo("Countries/{$reg}");
     if ($region)
     {
-      return $language.' ('.$region.')';
+      return $language[0].' ('.$region[0].')';
     }
     else
     {
-      return $language;
+      return $language[0];
     }
   }
 
@@ -523,7 +501,7 @@ class sfCultureInfo
 
     $region = $culture->findInfo("Countries/{$reg}");
 
-    return $region ? $language.' ('.$region.')' : $language;
+    return $region ? $language[0].' ('.$region[0].')' : $language[0];
   }
 
   /**
@@ -538,7 +516,7 @@ class sfCultureInfo
   {
     static $invariant;
 
-    if (null === $invariant)
+    if (is_null($invariant))
     {
       $invariant = new sfCultureInfo();
     }
@@ -566,7 +544,7 @@ class sfCultureInfo
    */
   public function getNumberFormat()
   {
-    if (null === $this->numberFormat)
+    if (is_null($this->numberFormat))
     {
       $elements = $this->findInfo('NumberElements');
       $patterns = $this->findInfo('NumberPatterns');
@@ -658,6 +636,27 @@ class sfCultureInfo
   }
 
   /**
+   * Simplifies a single element array into its own value.
+   * E.g. <code>array(0 => array('hello'), 1 => 'world');</code>
+   * becomes <code>array(0 => 'hello', 1 => 'world');</code>
+   *
+   * @param array $array with single elements arrays
+   * @return array simplified array.
+   */
+  static protected function simplify($array)
+  {
+    foreach ($array as &$item)
+    {
+      if (is_array($item) && count($item) == 1)
+      {
+        $item = $item[0];
+      }
+    }
+
+    return $array;
+  }
+
+  /**
    * Get the country name in the current culture for the given code.
    *
    * @param  string $code A valid country code
@@ -666,7 +665,7 @@ class sfCultureInfo
    */
   public function getCountry($code)
   {
-    $countries = $this->findInfo('Countries', true);
+    $countries = $this->simplify($this->findInfo('Countries', true));
 
     if (!isset($countries[$code]))
     {
@@ -685,7 +684,7 @@ class sfCultureInfo
    */
   public function getCurrency($code)
   {
-    $currencies = $this->findInfo('Currencies', true);
+    $currencies = $this->simplify($this->findInfo('Currencies', true));
 
     if (!isset($currencies[$code]))
     {
@@ -704,7 +703,7 @@ class sfCultureInfo
    */
   public function getLanguage($code)
   {
-    $languages = $this->findInfo('Languages', true);
+    $languages = $this->simplify($this->findInfo('Languages', true));
 
     if (!isset($languages[$code]))
     {
@@ -723,18 +722,10 @@ class sfCultureInfo
    */
   public function getCountries($countries = null)
   {
-    // remove integer keys as they do not represent countries
-    $allCountries = array();
-    foreach ($this->findInfo('Countries', true) as $key => $value)
-    {
-      if (!is_int($key))
-      {
-        $allCountries[$key] = $value;
-      }
-    }
+    $allCountries = $this->simplify($this->findInfo('Countries', true));
 
     // restrict countries to a sub-set
-    if (null !== $countries)
+    if (!is_null($countries))
     {
       if ($problems = array_diff($countries, array_keys($allCountries)))
       {
@@ -744,7 +735,7 @@ class sfCultureInfo
       $allCountries = array_intersect_key($allCountries, array_flip($countries));
     }
 
-    $this->sortArray($allCountries);
+    asort($allCountries);
 
     return $allCountries;
   }
@@ -762,7 +753,7 @@ class sfCultureInfo
     $allCurrencies = $this->findInfo('Currencies', true);
 
     // restrict countries to a sub-set
-    if (null !== $currencies)
+    if (!is_null($currencies))
     {
       if ($problems = array_diff($currencies, array_keys($allCurrencies)))
       {
@@ -772,22 +763,16 @@ class sfCultureInfo
       $allCurrencies = array_intersect_key($allCurrencies, array_flip($currencies));
     }
 
-    $tmp = array();
-    foreach ($allCurrencies as $key => $value)
+    asort($allCurrencies);
+    if (!$full)
     {
-      $allCurrencies[$key] = $value[1];
-      $tmp[$key] = $value[0];
+      foreach ($allCurrencies as $key => $value)
+      {
+        $allCurrencies[$key] = $value[1];
+      }
     }
 
-    $this->sortArray($allCurrencies);
-
-    if ($full)
-    {
-        foreach ($allCurrencies as $key => $value)
-        {
-          $allCurrencies[$key] = array($tmp[$key], $value);
-        }
-    }
+    asort($allCurrencies);
 
     return $allCurrencies;
   }
@@ -801,10 +786,10 @@ class sfCultureInfo
    */
   public function getLanguages($languages = null)
   {
-    $allLanguages = $this->findInfo('Languages', true);
+    $allLanguages = $this->simplify($this->findInfo('Languages', true));
 
     // restrict languages to a sub-set
-    if (null !== $languages)
+    if (!is_null($languages))
     {
       if ($problems = array_diff($languages, array_keys($allLanguages)))
       {
@@ -814,7 +799,7 @@ class sfCultureInfo
       $allLanguages = array_intersect_key($allLanguages, array_flip($languages));
     }
 
-    $this->sortArray($allLanguages);
+    asort($allLanguages);
 
     return $allLanguages;
   }
@@ -826,7 +811,7 @@ class sfCultureInfo
    */
   public function getScripts()
   {
-    return $this->findInfo('Scripts', true);
+    return $this->simplify($this->findInfo('Scripts', true));
   }
 
   /**
@@ -836,30 +821,6 @@ class sfCultureInfo
    */
   public function getTimeZones()
   {
-    //new format since ICU 3.8
-    //zoneStrings contains metaTimezones
-    $metadata = $this->findInfo('zoneStrings', true);
-    //TimeZones contains the Timezone name => metaTimezone identifier
-    $timeZones = $this->findInfo('TimeZones', true);
-    foreach ($timeZones as $key => $value)
-    {
-      $timeZones[$key] = $metadata['meta:'.$value];
-      $timeZones[$key]['identifier'] = $key;
-      $timeZones[$key]['city'] = str_replace('_', ' ', substr($key, strpos($key, '/') + 1));
-    }
-    return $timeZones;
-  }
-
-  /**
-   * sorts the passed array according to the locale of this sfCultureInfo class
-   *
-   * @param  array the array to be sorted with "asort" and this locale
-   */
-  public function sortArray(&$array)
-  {
-    $oldLocale = setlocale(LC_COLLATE, 0);
-    setlocale(LC_COLLATE, $this->getName());
-    asort($array, SORT_LOCALE_STRING);
-    setlocale(LC_COLLATE, $oldLocale);
+    return $this->simplify($this->findInfo('zoneStrings', true));
   }
 }

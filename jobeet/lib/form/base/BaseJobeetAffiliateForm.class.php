@@ -3,34 +3,32 @@
 /**
  * JobeetAffiliate form base class.
  *
- * @method JobeetAffiliate getObject() Returns the current form's model object
- *
  * @package    jobeet
  * @subpackage form
  * @author     Your name here
  */
-abstract class BaseJobeetAffiliateForm extends BaseFormPropel
+class BaseJobeetAffiliateForm extends BaseFormPropel
 {
   public function setup()
   {
     $this->setWidgets(array(
       'id'                             => new sfWidgetFormInputHidden(),
-      'url'                            => new sfWidgetFormInputText(),
-      'email'                          => new sfWidgetFormInputText(),
-      'token'                          => new sfWidgetFormInputText(),
+      'url'                            => new sfWidgetFormInput(),
+      'email'                          => new sfWidgetFormInput(),
+      'token'                          => new sfWidgetFormInput(),
       'is_active'                      => new sfWidgetFormInputCheckbox(),
       'created_at'                     => new sfWidgetFormDateTime(),
-      'jobeet_category_affiliate_list' => new sfWidgetFormPropelChoice(array('multiple' => true, 'model' => 'JobeetCategory')),
+      'jobeet_category_affiliate_list' => new sfWidgetFormPropelChoiceMany(array('model' => 'JobeetCategory')),
     ));
 
     $this->setValidators(array(
-      'id'                             => new sfValidatorChoice(array('choices' => array($this->getObject()->getId()), 'empty_value' => $this->getObject()->getId(), 'required' => false)),
+      'id'                             => new sfValidatorPropelChoice(array('model' => 'JobeetAffiliate', 'column' => 'id', 'required' => false)),
       'url'                            => new sfValidatorString(array('max_length' => 255)),
       'email'                          => new sfValidatorString(array('max_length' => 255)),
       'token'                          => new sfValidatorString(array('max_length' => 255)),
       'is_active'                      => new sfValidatorBoolean(),
       'created_at'                     => new sfValidatorDateTime(array('required' => false)),
-      'jobeet_category_affiliate_list' => new sfValidatorPropelChoice(array('multiple' => true, 'model' => 'JobeetCategory', 'required' => false)),
+      'jobeet_category_affiliate_list' => new sfValidatorPropelChoiceMany(array('model' => 'JobeetCategory', 'required' => false)),
     ));
 
     $this->validatorSchema->setPostValidator(
@@ -87,7 +85,7 @@ abstract class BaseJobeetAffiliateForm extends BaseFormPropel
       return;
     }
 
-    if (null === $con)
+    if (is_null($con))
     {
       $con = $this->getConnection();
     }

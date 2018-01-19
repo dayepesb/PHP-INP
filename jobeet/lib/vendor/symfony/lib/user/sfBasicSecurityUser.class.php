@@ -16,7 +16,7 @@
  * @subpackage user
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Sean Kerr <sean@code-box.org>
- * @version    SVN: $Id: sfBasicSecurityUser.class.php 33466 2012-05-30 07:33:03Z fabien $
+ * @version    SVN: $Id: sfBasicSecurityUser.class.php 21875 2009-09-11 05:54:39Z fabien $
  */
 class sfBasicSecurityUser extends sfUser implements sfSecurityUser
 {
@@ -37,15 +37,14 @@ class sfBasicSecurityUser extends sfUser implements sfSecurityUser
    */
   public function clearCredentials()
   {
+    $this->credentials = null;
     $this->credentials = array();
   }
 
   /**
-   * Returns the current user's credentials.
-   * 
-   * @return array
+   * returns an array containing the credentials
    */
-  public function getCredentials()
+  public function listCredentials()
   {
     return $this->credentials;
   }
@@ -70,7 +69,7 @@ class sfBasicSecurityUser extends sfUser implements sfSecurityUser
 
           unset($this->credentials[$key]);
 
-          $this->storage->regenerate(true);
+          $this->storage->regenerate(false);
 
           return;
         }
@@ -117,7 +116,7 @@ class sfBasicSecurityUser extends sfUser implements sfSecurityUser
 
     if ($added)
     {
-      $this->storage->regenerate(true);
+      $this->storage->regenerate(false);
     }
   }
 
@@ -132,11 +131,6 @@ class sfBasicSecurityUser extends sfUser implements sfSecurityUser
    */
   public function hasCredential($credentials, $useAnd = true)
   {
-    if (null === $this->credentials)
-    {
-      return false;
-    }
-
     if (!is_array($credentials))
     {
       return in_array($credentials, $this->credentials);
@@ -205,7 +199,7 @@ class sfBasicSecurityUser extends sfUser implements sfSecurityUser
 
       $this->dispatcher->notify(new sfEvent($this, 'user.change_authentication', array('authenticated' => $this->authenticated)));
 
-      $this->storage->regenerate(true);
+      $this->storage->regenerate(false);
     }
   }
 
@@ -262,7 +256,7 @@ class sfBasicSecurityUser extends sfUser implements sfSecurityUser
     $this->credentials   = $storage->read(self::CREDENTIAL_NAMESPACE);
     $this->lastRequest   = $storage->read(self::LAST_REQUEST_NAMESPACE);
 
-    if (null === $this->authenticated)
+    if (is_null($this->authenticated))
     {
       $this->authenticated = false;
       $this->credentials   = array();
@@ -271,7 +265,7 @@ class sfBasicSecurityUser extends sfUser implements sfSecurityUser
     {
       // Automatic logout logged in user if no request within timeout parameter seconds
       $timeout = $this->options['timeout'];
-      if (false !== $timeout && null !== $this->lastRequest && time() - $this->lastRequest >= $timeout)
+      if (false !== $timeout && !is_null($this->lastRequest) && time() - $this->lastRequest >= $timeout)
       {
         if ($this->options['logging'])
         {

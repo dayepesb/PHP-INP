@@ -13,7 +13,7 @@
  *
  * @package    lime
  * @author     Fabien Potencier <fabien.potencier@gmail.com>
- * @version    SVN: $Id: lime.php 29529 2010-05-19 13:41:48Z fabien $
+ * @version    SVN: $Id: lime.php 19870 2009-07-04 12:26:25Z fabien $
  */
 class lime_test
 {
@@ -35,10 +35,9 @@ class lime_test
     }
 
     $this->options = array_merge(array(
-      'force_colors'    => false,
-      'output'          => null,
-      'verbose'         => false,
-      'error_reporting' => false,
+      'force_colors' => false,
+      'output'       => null,
+      'verbose'      => false,
     ), $options);
 
     $this->output = $this->options['output'] ? $this->options['output'] : new lime_output($this->options['force_colors']);
@@ -47,15 +46,12 @@ class lime_test
     self::$all_results[] = array(
       'file'  => $caller[0],
       'tests' => array(),
-      'stats' => array('plan' => $plan, 'total' => 0, 'failed' => array(), 'passed' => array(), 'skipped' => array(), 'errors' => array()),
+      'stats' => array('plan' => $plan, 'total' => 0, 'failed' => array(), 'passed' => array(), 'skipped' => array()),
     );
 
     $this->results = &self::$all_results[count(self::$all_results) - 1];
 
     null !== $plan and $this->output->echoln(sprintf("1..%d", $plan));
-
-    set_error_handler(array($this, 'handle_error'));
-    set_exception_handler(array($this, 'handle_exception'));
   }
 
   static public function reset()
@@ -91,13 +87,12 @@ class lime_test
       $testsuite->setAttribute('name', basename($result['file'], '.php'));
       $testsuite->setAttribute('file', $result['file']);
       $testsuite->setAttribute('failures', count($result['stats']['failed']));
-      $testsuite->setAttribute('errors', count($result['stats']['errors']));
+      $testsuite->setAttribute('errors', 0);
       $testsuite->setAttribute('skipped', count($result['stats']['skipped']));
       $testsuite->setAttribute('tests', $result['stats']['plan']);
       $testsuite->setAttribute('assertions', $result['stats']['plan']);
 
       $failures += count($result['stats']['failed']);
-      $errors += count($result['stats']['errors']);
       $skipped += count($result['stats']['skipped']);
       $assertions += $result['stats']['plan'];
 
@@ -112,7 +107,7 @@ class lime_test
         {
           $testcase->appendChild($failure = $dom->createElement('failure'));
           $failure->setAttribute('type', 'lime');
-          if (isset($test['error']))
+          if ($test['error'])
           {
             $failure->appendChild($dom->createTextNode($test['error']));
           }
@@ -139,20 +134,20 @@ class lime_test
 
     if ($total > $plan)
     {
-      $this->output->red_bar(sprintf("# Looks like you planned %d tests but ran %d extra.", $plan, $total - $plan));
+      $this->output->red_bar(sprintf(" Looks like you planned %d tests but ran %d extra.", $plan, $total - $plan));
     }
     elseif ($total < $plan)
     {
-      $this->output->red_bar(sprintf("# Looks like you planned %d tests but only ran %d.", $plan, $total));
+      $this->output->red_bar(sprintf(" Looks like you planned %d tests but only ran %d.", $plan, $total));
     }
 
     if ($failed)
     {
-      $this->output->red_bar(sprintf("# Looks like you failed %d tests of %d.", $failed, $passed + $failed));
+      $this->output->red_bar(sprintf(" Looks like you failed %d tests of %d.", $failed, $passed + $failed));
     }
     else if ($total == $plan)
     {
-      $this->output->green_bar("# Looks like everything went fine.");
+      $this->output->green_bar(" Looks like everything went fine.");
     }
 
     flush();
@@ -291,11 +286,7 @@ class lime_test
    */
   public function cmp_ok($exp1, $op, $exp2, $message = '')
   {
-    $php = sprintf("\$result = \$exp1 $op \$exp2;");
-    // under some unknown conditions the sprintf() call causes a segmentation fault
-    // when placed directly in the eval() call
-    eval($php);
-
+    eval(sprintf("\$result = \$exp1 $op \$exp2;"));
     if (!$this->ok($result, $message))
     {
       $this->set_last_test_errors(array(sprintf("      %s", str_replace("\n", '', var_export($exp1, true))), sprintf("          %s", $op), sprintf("      %s", str_replace("\n", '', var_export($exp2, true)))));
@@ -504,15 +495,9 @@ class lime_test
     $this->output->info($message);
   }
 
-  public function error($message, $file = null, $line = null, array $traces = array())
+  public function error($message)
   {
-    $this->output->error($message, $file, $line, $traces);
-
-  	$this->results['stats']['errors'][] = array(
-  	  'message' => $message,
-  	  'file' => $file,
-  	  'line' => $line,
-  	);
+    $this->output->error($message);
   }
 
   protected function update_stats()
@@ -546,48 +531,15 @@ class lime_test
     $last = count($traces) - 1;
     return array($traces[$last]['file'], $traces[$last]['line']);
   }
-
-  public function handle_error($code, $message, $file, $line, $context)
-  {
-    if (!$this->options['error_reporting'] || ($code & error_reporting()) == 0)
-    {
-      return false;
-    }
-
-    switch ($code)
-    {
-      case E_WARNING:
-        $type = 'Warning';
-        break;
-      default:
-        $type = 'Notice';
-        break;
-    }
-
-    $trace = debug_backtrace();
-    array_shift($trace); // remove the handle_error() call from the trace
-
-    $this->error($type.': '.$message, $file, $line, $trace);
-  }
-
-  public function handle_exception(Exception $exception)
-  {
-    $this->error(get_class($exception).': '.$exception->getMessage(), $exception->getFile(), $exception->getLine(), $exception->getTrace());
-
-    // exception was handled
-    return true;
-  }
 }
 
 class lime_output
 {
   public $colorizer = null;
-  public $base_dir = null;
 
-  public function __construct($force_colors = false, $base_dir = null)
+  public function __construct($force_colors = false)
   {
     $this->colorizer = new lime_colorizer($force_colors);
-    $this->base_dir = $base_dir === null ? getcwd() : $base_dir;
   }
 
   public function diag()
@@ -609,82 +561,16 @@ class lime_output
     echo $this->colorizer->colorize(sprintf('> %s', $message), 'INFO_BAR')."\n";
   }
 
-  public function error($message, $file = null, $line = null, $traces = array())
+  public function error($message)
   {
-    if ($file !== null)
-    {
-      $message .= sprintf("\n(in %s on line %s)", $file, $line);
-    }
-
-    // some error messages contain absolute file paths
-    $message = $this->strip_base_dir($message);
-
-    $space = $this->colorizer->colorize(str_repeat(' ', 71), 'RED_BAR')."\n";
-    $message = trim($message);
-    $message = wordwrap($message, 66, "\n");
-
-    echo "\n".$space;
-    foreach (explode("\n", $message) as $message_line)
-    {
-      echo $this->colorizer->colorize(str_pad('  '.$message_line, 71, ' '), 'RED_BAR')."\n";
-    }
-    echo $space."\n";
-
-    if (count($traces) > 0)
-    {
-      echo $this->colorizer->colorize('Exception trace:', 'COMMENT')."\n";
-
-      $this->print_trace(null, $file, $line);
-
-      foreach ($traces as $trace)
-      {
-        if (array_key_exists('class', $trace))
-        {
-          $method = sprintf('%s%s%s()', $trace['class'], $trace['type'], $trace['function']);
-        }
-        else
-        {
-          $method = sprintf('%s()', $trace['function']);
-        }
-
-        if (array_key_exists('file', $trace))
-        {
-          $this->print_trace($method, $trace['file'], $trace['line']);
-        }
-        else
-        {
-          $this->print_trace($method);
-        }
-      }
-
-      echo "\n";
-    }
-  }
-
-  protected function print_trace($method = null, $file = null, $line = null)
-  {
-    if (!is_null($method))
-    {
-      $method .= ' ';
-    }
-
-    echo '  '.$method.'at ';
-
-    if (!is_null($file) && !is_null($line))
-    {
-      printf("%s:%s\n", $this->colorizer->colorize($this->strip_base_dir($file), 'TRACE'), $this->colorizer->colorize($line, 'TRACE'));
-    }
-    else
-    {
-      echo "[internal function]\n";
-    }
+    echo $this->colorizer->colorize(sprintf(' %s ', $message), 'RED_BAR')."\n";
   }
 
   public function echoln($message, $colorizer_parameter = null, $colorize = true)
   {
     if ($colorize)
     {
-      $message = preg_replace('/(?:^|\.)((?:not ok|dubious|errors) *\d*)\b/e', '$this->colorizer->colorize(\'$1\', \'ERROR\')', $message);
+      $message = preg_replace('/(?:^|\.)((?:not ok|dubious) *\d*)\b/e', '$this->colorizer->colorize(\'$1\', \'ERROR\')', $message);
       $message = preg_replace('/(?:^|\.)(ok *\d*)\b/e', '$this->colorizer->colorize(\'$1\', \'INFO\')', $message);
       $message = preg_replace('/"(.+?)"/e', '$this->colorizer->colorize(\'$1\', \'PARAMETER\')', $message);
       $message = preg_replace('/(\->|\:\:)?([a-zA-Z0-9_]+?)\(\)/e', '$this->colorizer->colorize(\'$1$2()\', \'PARAMETER\')', $message);
@@ -702,11 +588,6 @@ class lime_output
   {
     echo $this->colorizer->colorize($message.str_repeat(' ', 71 - min(71, strlen($message))), 'RED_BAR')."\n";
   }
-
-  protected function strip_base_dir($text)
-  {
-    return str_replace(DIRECTORY_SEPARATOR, '/', str_replace(realpath($this->base_dir).DIRECTORY_SEPARATOR, '', $text));
-  }
 }
 
 class lime_output_color extends lime_output
@@ -717,26 +598,11 @@ class lime_colorizer
 {
   static public $styles = array();
 
-  protected $colors_supported = false;
+  protected $force_colors = false;
 
   public function __construct($force_colors = false)
   {
-    if ($force_colors)
-    {
-      $this->colors_supported = true;
-    }
-    else
-    {
-      // colors are supported on windows with ansicon or on tty consoles
-      if (DIRECTORY_SEPARATOR == '\\')
-      {
-        $this->colors_supported = false !== getenv('ANSICON');
-      }
-      else
-      {
-        $this->colors_supported = function_exists('posix_isatty') && @posix_isatty(STDOUT);
-      }
-    }
+    $this->force_colors = $force_colors;
   }
 
   public static function style($name, $options = array())
@@ -746,8 +612,8 @@ class lime_colorizer
 
   public function colorize($text = '', $parameters = array())
   {
-
-    if (!$this->colors_supported)
+    // disable colors if not supported (windows or non tty console)
+    if (!$this->force_colors && (DIRECTORY_SEPARATOR == '\\' || !function_exists('posix_isatty') || !@posix_isatty(STDOUT)))
     {
       return $text;
     }
@@ -772,7 +638,6 @@ class lime_colorizer
 
 lime_colorizer::style('ERROR', array('bg' => 'red', 'fg' => 'white', 'bold' => true));
 lime_colorizer::style('INFO', array('fg' => 'green', 'bold' => true));
-lime_colorizer::style('TRACE', array('fg' => 'green', 'bold' => true));
 lime_colorizer::style('PARAMETER', array('fg' => 'cyan'));
 lime_colorizer::style('COMMENT', array('fg' => 'yellow'));
 
@@ -894,12 +759,8 @@ class lime_harness extends lime_registration
       $result_file = tempnam(sys_get_temp_dir(), 'lime');
       file_put_contents($test_file, <<<EOF
 <?php
-function lime_shutdown()
-{
-  file_put_contents('$result_file', serialize(lime_test::to_array()));
-}
-register_shutdown_function('lime_shutdown');
 include('$file');
+file_put_contents('$result_file', serialize(lime_test::to_array()));
 EOF
       );
 
@@ -913,7 +774,7 @@ EOF
       $stats['output'] = $output ? unserialize($output) : '';
       if (!$stats['output'])
       {
-        $stats['output'] = array(array('file' => $file, 'tests' => array(), 'stats' => array('plan' => 1, 'total' => 1, 'failed' => array(0), 'passed' => array(), 'skipped' => array(), 'errors' => array())));
+        $stats['output'] = array(array('file' => $file, 'tests' => array(), 'stats' => array('plan' => 1, 'total' => 1, 'failed' => array(0), 'passed' => array(), 'skipped' => array())));
       }
       unlink($result_file);
 
@@ -922,7 +783,7 @@ EOF
       $delta = 0;
       if ($return > 0)
       {
-        $stats['status'] = $file_stats['errors'] ? 'errors' : 'dubious';
+        $stats['status'] = 'dubious';
         $stats['status_code'] = $return;
       }
       else
@@ -937,19 +798,19 @@ EOF
         $delta = $file_stats['plan'] - $file_stats['total'];
         if (0 != $delta)
         {
-          $stats['status'] = $file_stats['errors'] ? 'errors' : 'dubious';
+          $stats['status'] = 'dubious';
           $stats['status_code'] = 255;
         }
         else
         {
-          $stats['status'] = $file_stats['failed'] ? 'not ok' : ($file_stats['errors'] ? 'errors' : 'ok');
+          $stats['status'] = $file_stats['failed'] ? 'not ok' : 'ok';
           $stats['status_code'] = 0;
         }
       }
 
       $this->output->echoln(sprintf('%s%s%s', substr($relative_file, -min(67, strlen($relative_file))), str_repeat('.', 70 - min(67, strlen($relative_file))), $stats['status']));
 
-      if ('dubious' == $stats['status'])
+      if (0 != $stats['status_code'])
       {
         $this->output->echoln(sprintf('    Test returned status %s', $stats['status_code']));
       }
@@ -977,28 +838,13 @@ EOF
 
         $this->output->echoln(sprintf("    Failed tests: %s", implode(', ', $file_stats['failed'])));
       }
-
-      if (false !== $file_stats && $file_stats['errors'])
-      {
-        $this->output->echoln('    Errors:');
-
-        $error_count = count($file_stats['errors']);
-        for ($i = 0; $i < 3 && $i < $error_count; ++$i)
-        {
-          $this->output->echoln('    - ' . $file_stats['errors'][$i]['message'], null, false);
-        }
-        if ($error_count > 3)
-        {
-          $this->output->echoln(sprintf('    ... and %s more', $error_count-3));
-        }
-      }
     }
 
     if (count($this->stats['failed_files']))
     {
-      $format = "%-30s  %4s  %5s  %5s  %5s  %s";
-      $this->output->echoln(sprintf($format, 'Failed Test', 'Stat', 'Total', 'Fail', 'Errors', 'List of Failed'));
-      $this->output->echoln("--------------------------------------------------------------------------");
+      $format = "%-30s  %4s  %5s  %5s  %s";
+      $this->output->echoln(sprintf($format, 'Failed Test', 'Stat', 'Total', 'Fail', 'List of Failed'));
+      $this->output->echoln("------------------------------------------------------------------");
       foreach ($this->stats['files'] as $file => $stat)
       {
         if (!in_array($file, $this->stats['failed_files']))
@@ -1009,7 +855,7 @@ EOF
 
         if (isset($stat['output'][0]))
         {
-          $this->output->echoln(sprintf($format, substr($relative_file, -min(30, strlen($relative_file))), $stat['status_code'], count($stat['output'][0]['stats']['failed']) + count($stat['output'][0]['stats']['passed']), count($stat['output'][0]['stats']['failed']), count($stat['output'][0]['stats']['errors']), implode(' ', $stat['output'][0]['stats']['failed'])));
+          $this->output->echoln(sprintf($format, substr($relative_file, -min(30, strlen($relative_file))), $stat['status_code'], count($stat['output'][0]['stats']['failed']) + count($stat['output'][0]['stats']['passed']), count($stat['output'][0]['stats']['failed']), implode(' ', $stat['output'][0]['stats']['failed'])));
         }
         else
         {

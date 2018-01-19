@@ -19,7 +19,7 @@
  * @subpackage util
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Sean Kerr <sean@code-box.org>
- * @version    SVN: $Id: sfParameterHolder.class.php 23922 2009-11-14 14:58:38Z fabien $
+ * @version    SVN: $Id: sfParameterHolder.class.php 10835 2008-08-13 11:58:38Z fabien $
  */
 class sfParameterHolder implements Serializable
 {
@@ -56,7 +56,7 @@ class sfParameterHolder implements Serializable
     }
     else
     {
-      $value = $default;
+      $value = sfToolkit::getArrayValueForPath($this->parameters, $name, $default);
     }
 
     return $value;
@@ -91,7 +91,16 @@ class sfParameterHolder implements Serializable
    */
   public function has($name)
   {
-    return array_key_exists($name, $this->parameters);
+    if (array_key_exists($name, $this->parameters))
+    {
+      return true;
+    }
+    else
+    {
+      return sfToolkit::hasArrayValueForPath($this->parameters, $name);
+    }
+
+    return false;
   }
 
   /**
@@ -110,6 +119,10 @@ class sfParameterHolder implements Serializable
     {
       $retval = $this->parameters[$name];
       unset($this->parameters[$name]);
+    }
+    else
+    {
+      $retval = sfToolkit::removeArrayValueForPath($this->parameters, $name, $default);
     }
 
     return $retval;
@@ -151,7 +164,7 @@ class sfParameterHolder implements Serializable
    */
   public function add($parameters)
   {
-    if (null === $parameters)
+    if (is_null($parameters))
     {
       return;
     }

@@ -16,7 +16,7 @@ require_once(dirname(__FILE__).'/sfPropelBaseTask.class.php');
  * @package    symfony
  * @subpackage propel
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfPropelBuildModelTask.class.php 23922 2009-11-14 14:58:38Z fabien $
+ * @version    SVN: $Id: sfPropelBuildModelTask.class.php 12129 2008-10-10 14:00:53Z Kris.Wallsmith $
  */
 class sfPropelBuildModelTask extends sfPropelBaseTask
 {
@@ -29,6 +29,7 @@ class sfPropelBuildModelTask extends sfPropelBaseTask
       new sfCommandOption('phing-arg', null, sfCommandOption::PARAMETER_REQUIRED | sfCommandOption::IS_ARRAY, 'Arbitrary phing argument'),
     ));
 
+    $this->aliases = array('propel-build-model');
     $this->namespace = 'propel';
     $this->name = 'build-model';
     $this->briefDescription = 'Creates classes for the current model';
@@ -61,7 +62,12 @@ EOF;
     $ret = $this->callPhing('om', self::CHECK_SCHEMA);
     $this->cleanup();
 
-    $this->reloadAutoload();
+    if ($ret)
+    {
+      $this->logSection('autoload', 'reloading autoloading');
+
+      sfSimpleAutoload::getInstance()->reload();
+    }
 
     return !$ret;
   }

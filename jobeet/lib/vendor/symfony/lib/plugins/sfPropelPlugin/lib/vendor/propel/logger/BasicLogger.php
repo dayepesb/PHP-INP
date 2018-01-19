@@ -1,7 +1,7 @@
 <?php
 
 /*
- *  $Id: BasicLogger.php 1262 2009-10-26 20:54:39Z francois $
+ *  $Id: BasicLogger.php 521 2007-01-05 13:29:36Z heltem $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -31,7 +31,7 @@
  * and Jon Parise <jon@php.net>.
  *
  * @author     Hans Lellelid <hans@xmpl.org>
- * @version    $Revision: 1262 $
+ * @version    $Revision: 521 $
  * @package    propel.logger
  */
 interface BasicLogger {

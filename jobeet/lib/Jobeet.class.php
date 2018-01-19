@@ -1,20 +1,32 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: INPDavidYepes
- * Date: 18/01/2018
- * Time: 9:30 AM
- */
+
 class Jobeet
 {
-    static public function slugify($text)
+  static public function slugify($text)
+  {
+    // replace non letter or digits by -
+    $text = preg_replace('~[^\\pL\d]+~u', '-', $text);
+
+    // trim
+    $text = trim($text, '-');
+
+    // transliterate
+    if (function_exists('iconv'))
     {
-        // replace all non letters or digits by -
-        $text = @preg_replace('/\W+/', '-', $text);
-
-        // trim and lowercase
-        $text = strtolower(trim($text, '-'));
-
-        return $text;
+      $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text);
     }
+
+    // lowercase
+    $text = strtolower($text);
+
+    // remove unwanted characters
+    $text = preg_replace('~[^-\w]+~', '', $text);
+
+    if (empty($text))
+    {
+      return 'n-a';
+    }
+
+    return $text;
+  }
 }

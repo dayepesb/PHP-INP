@@ -3,28 +3,26 @@
 /**
  * JobeetCategory form base class.
  *
- * @method JobeetCategory getObject() Returns the current form's model object
- *
  * @package    jobeet
  * @subpackage form
  * @author     Your name here
  */
-abstract class BaseJobeetCategoryForm extends BaseFormPropel
+class BaseJobeetCategoryForm extends BaseFormPropel
 {
   public function setup()
   {
     $this->setWidgets(array(
       'id'                             => new sfWidgetFormInputHidden(),
-      'name'                           => new sfWidgetFormInputText(),
-      'slug'                           => new sfWidgetFormInputText(),
-      'jobeet_category_affiliate_list' => new sfWidgetFormPropelChoice(array('multiple' => true, 'model' => 'JobeetAffiliate')),
+      'name'                           => new sfWidgetFormInput(),
+      'slug'                           => new sfWidgetFormInput(),
+      'jobeet_category_affiliate_list' => new sfWidgetFormPropelChoiceMany(array('model' => 'JobeetAffiliate')),
     ));
 
     $this->setValidators(array(
-      'id'                             => new sfValidatorChoice(array('choices' => array($this->getObject()->getId()), 'empty_value' => $this->getObject()->getId(), 'required' => false)),
+      'id'                             => new sfValidatorPropelChoice(array('model' => 'JobeetCategory', 'column' => 'id', 'required' => false)),
       'name'                           => new sfValidatorString(array('max_length' => 255)),
       'slug'                           => new sfValidatorString(array('max_length' => 255)),
-      'jobeet_category_affiliate_list' => new sfValidatorPropelChoice(array('multiple' => true, 'model' => 'JobeetAffiliate', 'required' => false)),
+      'jobeet_category_affiliate_list' => new sfValidatorPropelChoiceMany(array('model' => 'JobeetAffiliate', 'required' => false)),
     ));
 
     $this->validatorSchema->setPostValidator(
@@ -84,7 +82,7 @@ abstract class BaseJobeetCategoryForm extends BaseFormPropel
       return;
     }
 
-    if (null === $con)
+    if (is_null($con))
     {
       $con = $this->getConnection();
     }

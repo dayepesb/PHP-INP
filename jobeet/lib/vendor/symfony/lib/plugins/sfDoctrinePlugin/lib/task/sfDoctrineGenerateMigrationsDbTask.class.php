@@ -18,7 +18,7 @@ require_once(dirname(__FILE__).'/sfDoctrineBaseTask.class.php');
  * @subpackage doctrine
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Jonathan H. Wage <jonwage@gmail.com>
- * @version    SVN: $Id: sfDoctrineGenerateMigrationsDbTask.class.php 23922 2009-11-14 14:58:38Z fabien $
+ * @version    SVN: $Id: sfDoctrineGenerateMigrationsDbTask.class.php 14213 2008-12-19 21:03:13Z Jonathan.Wage $
  */
 class sfDoctrineGenerateMigrationsDbTask extends sfDoctrineBaseTask
 {
@@ -32,15 +32,15 @@ class sfDoctrineGenerateMigrationsDbTask extends sfDoctrineBaseTask
       new sfCommandOption('env', null, sfCommandOption::PARAMETER_REQUIRED, 'The environment', 'dev'),
     ));
 
+    $this->aliases = array('doctrine-generate-migrations-db', 'doctrine-gen-migrations-from-db');
     $this->namespace = 'doctrine';
     $this->name = 'generate-migrations-db';
     $this->briefDescription = 'Generate migration classes from existing database connections';
 
     $this->detailedDescription = <<<EOF
-The [doctrine:generate-migrations-db|INFO] task generates migration classes from
-existing database connections:
+The [doctrine:generate-migration|INFO] task generates migration classes from existing database connections
 
-  [./symfony doctrine:generate-migrations-db|INFO]
+  [./symfony doctrine:generate-migration|INFO]
 EOF;
   }
 
@@ -49,18 +49,9 @@ EOF;
    */
   protected function execute($arguments = array(), $options = array())
   {
-    $databaseManager = new sfDatabaseManager($this->configuration);
-    $config = $this->getCliConfig();
-
     $this->logSection('doctrine', 'generating migration classes from database');
 
-    if (!is_dir($config['migrations_path']))
-    {
-      $this->getFilesystem()->mkdirs($config['migrations_path']);
-    }
-
-    $this->callDoctrineCli('generate-migrations-db', array(
-      'yaml_schema_path' => $this->prepareSchemaFile($config['yaml_schema_path']),
-    ));
+    $databaseManager = new sfDatabaseManager($this->configuration);
+    $this->callDoctrineCli('generate-migrations-db');
   }
 }

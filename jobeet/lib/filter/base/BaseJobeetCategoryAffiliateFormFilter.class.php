@@ -1,5 +1,7 @@
 <?php
 
+require_once(sfConfig::get('sf_lib_dir').'/filter/base/BaseFormFilterPropel.class.php');
+
 /**
  * JobeetCategoryAffiliate filter form base class.
  *
@@ -7,7 +9,7 @@
  * @subpackage filter
  * @author     Your name here
  */
-abstract class BaseJobeetCategoryAffiliateFormFilter extends BaseFormFilterPropel
+class BaseJobeetCategoryAffiliateFormFilter extends BaseFormFilterPropel
 {
   public function setup()
   {

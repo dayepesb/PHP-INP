@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Column.php 7663 2010-06-08 19:00:08Z jwage $
+ *  $Id: Column.php 5801 2009-06-02 17:30:27Z piccoloprincipe $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -16,7 +16,7 @@
  *
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information, see
- * <http://www.doctrine-project.org>.
+ * <http://www.phpdoctrine.org>.
  */
 
 /**
@@ -27,14 +27,14 @@
  * @package     Doctrine
  * @subpackage  Column
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
- * @version     $Revision: 7663 $
- * @link        www.doctrine-project.org
+ * @version     $Revision: 5801 $
+ * @link        www.phpdoctrine.org
  * @since       1.0
  */
 class Doctrine_Column extends Doctrine_Access implements IteratorAggregate, Countable
 {
     /**
-     * @var array $_definition  @see getDefinition()
+     * @var array $definition
      */
     protected $_definition = array(
                                 'type'    => null,
@@ -42,7 +42,7 @@ class Doctrine_Column extends Doctrine_Access implements IteratorAggregate, Coun
                                 );
 
     /**
-     * @var array $definition  @see getDefinition()
+     * @var array $definition
      */
     public function __construct(array $definition = array())
     {
@@ -50,12 +50,6 @@ class Doctrine_Column extends Doctrine_Access implements IteratorAggregate, Coun
     }
 
     /**
-     * Returns the definition of the column.
-     *
-     * Keys can be: 
-     *     string type,
-     *     integer length,
-     *     array values (only for enum fields, maps integer indexes to mixed values),
      * @return array
      */
     public function getDefinition()
@@ -92,7 +86,7 @@ class Doctrine_Column extends Doctrine_Access implements IteratorAggregate, Coun
      * set
      *
      * @param string $name
-     * @return void
+     * @return mixed
      */
     public function set($name, $value)
     {
@@ -113,18 +107,19 @@ class Doctrine_Column extends Doctrine_Access implements IteratorAggregate, Coun
     }
 
     /**
-     * Retrieves an enum value.
+     * enumValue
      *
+     * @param string $field
      * @param integer $index
-     * @return string       integer ($index) if not present
+     * @return mixed
      */
     public function enumValue($index)
     {
         if ($index instanceof Doctrine_Null) {
-            return false;
+            return $index;
         }
 
-        return isset($this->_definition['values'][$index]) ? $this->_definition['values'][$index] : false;
+        return isset($this->_definition['values'][$index]) ? $this->_definition['values'][$index] : $index;
     }
 
     /**

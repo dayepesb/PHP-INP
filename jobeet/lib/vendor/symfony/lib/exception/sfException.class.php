@@ -18,15 +18,12 @@
  * @subpackage exception
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Sean Kerr <sean@code-box.org>
- * @version    SVN: $Id: sfException.class.php 33539 2012-09-19 05:36:02Z fabien $
+ * @version    SVN: $Id: sfException.class.php 23913 2009-11-14 14:24:03Z bschussek $
  */
 class sfException extends Exception
 {
   protected
     $wrappedException = null;
-
-  static protected
-    $lastException = null;
 
   /**
    * Wraps an Exception.
@@ -39,52 +36,26 @@ class sfException extends Exception
   {
     $exception = new sfException(sprintf('Wrapped %s: %s', get_class($e), $e->getMessage()));
     $exception->setWrappedException($e);
-    self::$lastException = $e;
 
     return $exception;
   }
 
   /**
-   * Sets the wrapped exception.
+   * Changes the wrapped exception.
    *
    * @param Exception $e An Exception instance
    */
   public function setWrappedException(Exception $e)
   {
     $this->wrappedException = $e;
-
-    self::$lastException = $e;
   }
 
-  /**
-   * Gets the last wrapped exception.
-   *
-   * @return Exception An Exception instance
-   */
-  static public function getLastException()
-  {
-    return self::$lastException;
-  }
-
-  /**
-   * Clears the $lastException property (added for #6342)
-   */
-  static public function clearLastException()
-  {
-  	self::$lastException = null;
-  }
-  
   /**
    * Prints the stack trace for this exception.
    */
   public function printStackTrace()
   {
-    if (null === $this->wrappedException)
-    {
-      $this->setWrappedException($this);
-    }
-
-    $exception = $this->wrappedException;
+    $exception = is_null($this->wrappedException) ? $this : $this->wrappedException;
 
     if (!sfConfig::get('sf_test'))
     {
@@ -100,9 +71,7 @@ class sfException extends Exception
         }
       }
 
-      if (sfConfig::get('sf_compressed')) {
-          ob_start('ob_gzhandler');
-      }
+      ob_start(sfConfig::get('sf_compressed') ? 'ob_gzhandler' : '');
 
       header('HTTP/1.0 500 Internal Server Error');
     }
@@ -130,7 +99,6 @@ class sfException extends Exception
     $code   = '500';
     $text   = 'Internal Server Error';
 
-    $response = null;
     if (class_exists('sfContext', false) && sfContext::hasInstance() && is_object($request = sfContext::getInstance()->getRequest()) && is_object($response = sfContext::getInstance()->getResponse()))
     {
       $dispatcher = sfContext::getInstance()->getEventDispatcher();
@@ -195,16 +163,9 @@ class sfException extends Exception
       }
     }
 
-    // when using CLI, we force the format to be TXT. Compare exactly to 
-    // the string 'cli' because the php 5.4 server is identified by 'cli-server'
-    if ('cli' == PHP_SAPI)
-    {
-      $format = 'txt';
-    }
-
-    $message = null === $exception->getMessage() ? 'n/a' : $exception->getMessage();
+    $message = is_null($exception->getMessage()) ? 'n/a' : $exception->getMessage();
     $name    = get_class($exception);
-    $traces  = self::getTraces($exception, $format);
+    $traces  = self::getTraces($exception, 'html' != $format || 0 == strncasecmp(PHP_SAPI, 'cli', 3) ? 'plain' : 'html');
 
     // dump main objects values
     $sf_settings = '';
@@ -219,28 +180,14 @@ class sfException extends Exception
       $globalsTable  = self::formatArrayAsHtml(sfDebug::globalsAsArray());
     }
 
-    if (isset($response) && $response)
+    if ($response)
     {
       $response->sendHttpHeaders();
     }
 
     if ($template = self::getTemplatePathForError($format, true))
     {
-      if (isset($dispatcher))
-      {
-        ob_start();
-        include $template;
-        $content = ob_get_clean();
-
-        $event = $dispatcher->filter(new sfEvent($response, 'response.filter_content'), $content);
-
-        echo $event->getReturnValue();
-      }
-      else
-      {
-        include $template;
-      }
-
+      include $template;
       return;
     }
   }
@@ -248,11 +195,11 @@ class sfException extends Exception
   /**
    * Returns the path for the template error message.
    *
-   * @param  string  $format The request format
-   * @param  Boolean $debug  Whether to return a template for the debug mode or not
+   * @param string  $format The request format
+   * @param Boolean $debug  Whether to return a template for the debug mode or not
    *
-   * @return string|Boolean  false if the template cannot be found for the given format,
-   *                         the absolute path to the template otherwise
+   * @return string|Boolean false if the template cannot be found for the given format,
+   *                        the absolute path to the template otherwise
    */
   static public function getTemplatePathForError($format, $debug)
   {
@@ -265,7 +212,7 @@ class sfException extends Exception
     $template = sprintf('%s.%s.php', $debug ? 'exception' : 'error', $format);
     foreach ($templatePaths as $path)
     {
-      if (null !== $path && is_readable($file = $path.'/'.$template))
+      if (!is_null($path) && is_readable($file = $path.'/'.$template))
       {
         return $file;
       }
@@ -277,43 +224,43 @@ class sfException extends Exception
   /**
    * Returns an array of exception traces.
    *
-   * @param Exception $exception  An Exception implementation instance
-   * @param string    $format     The trace format (txt or html)
+   * @param Exception $exception An Exception implementation instance
+   * @param string    $format    The trace format (plain or html)
    *
    * @return array An array of traces
    */
-  static protected function getTraces($exception, $format = 'txt')
+  static protected function getTraces($exception, $format = 'plain')
   {
     $traceData = $exception->getTrace();
     array_unshift($traceData, array(
       'function' => '',
-      'file'     => $exception->getFile() != null ? $exception->getFile() : null,
-      'line'     => $exception->getLine() != null ? $exception->getLine() : null,
+      'file'     => $exception->getFile() != null ? $exception->getFile() : 'n/a',
+      'line'     => $exception->getLine() != null ? $exception->getLine() : 'n/a',
       'args'     => array(),
     ));
 
     $traces = array();
     if ($format == 'html')
     {
-      $lineFormat = 'at <strong>%s%s%s</strong>(%s)<br />in <em>%s</em> line %s <a href="#" onclick="toggle(\'%s\'); return false;">...</a><br /><ul class="code" id="%s" style="display: %s">%s</ul>';
+      $lineFormat = 'at <strong>%s%s%s</strong>(%s)<br />in <em>%s</em> line %s <a href="#" onclick="toggle(\'%s\'); return false;">...</a><br /><ul id="%s" style="display: %s">%s</ul>';
     }
     else
     {
       $lineFormat = 'at %s%s%s(%s) in %s line %s';
     }
-
     for ($i = 0, $count = count($traceData); $i < $count; $i++)
     {
-      $line = isset($traceData[$i]['line']) ? $traceData[$i]['line'] : null;
-      $file = isset($traceData[$i]['file']) ? $traceData[$i]['file'] : null;
+      $line = isset($traceData[$i]['line']) ? $traceData[$i]['line'] : 'n/a';
+      $file = isset($traceData[$i]['file']) ? $traceData[$i]['file'] : 'n/a';
+      $shortFile = preg_replace(array('#^'.preg_quote(sfConfig::get('sf_root_dir')).'#', '#^'.preg_quote(realpath(sfConfig::get('sf_symfony_lib_dir'))).'#'), array('SF_ROOT_DIR', 'SF_SYMFONY_LIB_DIR'), $file);
       $args = isset($traceData[$i]['args']) ? $traceData[$i]['args'] : array();
       $traces[] = sprintf($lineFormat,
         (isset($traceData[$i]['class']) ? $traceData[$i]['class'] : ''),
         (isset($traceData[$i]['type']) ? $traceData[$i]['type'] : ''),
         $traceData[$i]['function'],
         self::formatArgs($args, false, $format),
-        self::formatFile($file, $line, $format, null === $file ? 'n/a' : sfDebug::shortenFilePath($file)),
-        null === $line ? 'n/a' : $line,
+        $shortFile,
+        $line,
         'trace_'.$i,
         'trace_'.$i,
         $i == 0 ? 'block' : 'none',
@@ -339,8 +286,8 @@ class sfException extends Exception
   /**
    * Returns an excerpt of a code file around the given line number.
    *
-   * @param string $file  A file path
-   * @param int    $line  The selected line number
+   * @param string $file A file path
+   * @param int    $line The selected line number
    *
    * @return string An HTML string
    */
@@ -348,7 +295,7 @@ class sfException extends Exception
   {
     if (is_readable($file))
     {
-      $content = preg_split('#<br />#', preg_replace('/^<code>(.*)<\/code>$/s', '$1', highlight_file($file, true)));
+      $content = preg_split('#<br />#', highlight_file($file, true));
 
       $lines = array();
       for ($i = max($line - 3, 1), $max = min($line + 3, count($content)); $i <= $max; $i++)
@@ -363,9 +310,9 @@ class sfException extends Exception
   /**
    * Formats an array as a string.
    *
-   * @param array   $args     The argument array
+   * @param array   $args   The argument array
    * @param boolean $single
-   * @param string  $format   The format string (html or txt)
+   * @param string  $format The format string (html or plain)
    *
    * @return string
    */
@@ -389,7 +336,7 @@ class sfException extends Exception
       {
         $formattedValue = ($format == 'html' ? sprintf("'%s'", self::escape($value)) : "'$value'");
       }
-      else if (null === $value)
+      else if (is_null($value))
       {
         $formattedValue = ($format == 'html' ? '<em>null</em>' : 'null');
       }
@@ -403,33 +350,7 @@ class sfException extends Exception
 
     return implode(', ', $result);
   }
-
-  /**
-   * Formats a file path.
-   * 
-   * @param  string  $file   An absolute file path
-   * @param  integer $line   The line number
-   * @param  string  $format The output format (txt or html)
-   * @param  string  $text   Use this text for the link rather than the file path
-   * 
-   * @return string
-   */
-  static protected function formatFile($file, $line, $format = 'html', $text = null)
-  {
-    if (null === $text)
-    {
-      $text = $file;
-    }
-
-    if ('html' == $format && $file && $line && $linkFormat = sfConfig::get('sf_file_link_format', ini_get('xdebug.file_link_format')))
-    {
-      $link = strtr($linkFormat, array('%f' => $file, '%l' => $line));
-      $text = sprintf('<a href="%s" title="Click to open this file" class="file_link">%s</a>', $link, $text);
-    }
-
-    return $text;
-  }
-
+  
   /**
    * Escapes a string value with html entities
    *

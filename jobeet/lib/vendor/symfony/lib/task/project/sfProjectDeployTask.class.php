@@ -14,14 +14,10 @@
  * @package    symfony
  * @subpackage task
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfProjectDeployTask.class.php 33125 2011-10-08 21:02:31Z fabien $
+ * @version    SVN: $Id: sfProjectDeployTask.class.php 23439 2009-10-29 16:21:03Z fabien $
  */
 class sfProjectDeployTask extends sfBaseTask
 {
-  protected
-    $outputBuffer = '',
-    $errorBuffer = '';
-
   /**
    * @see sfTask
    */
@@ -34,9 +30,10 @@ class sfProjectDeployTask extends sfBaseTask
     $this->addOptions(array(
       new sfCommandOption('go', null, sfCommandOption::PARAMETER_NONE, 'Do the deployment'),
       new sfCommandOption('rsync-dir', null, sfCommandOption::PARAMETER_REQUIRED, 'The directory where to look for rsync*.txt files', 'config'),
-      new sfCommandOption('rsync-options', null, sfCommandOption::PARAMETER_OPTIONAL, 'To options to pass to the rsync executable', '-azC --force --delete --progress'),
+      new sfCommandOption('rsync-options', null, sfCommandOption::PARAMETER_OPTIONAL, 'To options to pass to the rsync executable', '-azC --force --delete'),
     ));
 
+    $this->aliases = array('sync');
     $this->namespace = 'project';
     $this->name = 'deploy';
     $this->briefDescription = 'Deploys a project to another server';
@@ -142,14 +139,14 @@ EOF;
     else
     {
       $parameters = $options['rsync-options'];
-      if (file_exists($options['rsync-dir'].'/rsync_include.txt'))
-      {
-        $parameters .= sprintf(' --include-from=%s/rsync_include.txt', $options['rsync-dir']);
-      }
-
       if (file_exists($options['rsync-dir'].'/rsync_exclude.txt'))
       {
         $parameters .= sprintf(' --exclude-from=%s/rsync_exclude.txt', $options['rsync-dir']);
+      }
+
+      if (file_exists($options['rsync-dir'].'/rsync_include.txt'))
+      {
+        $parameters .= sprintf(' --include-from=%s/rsync_include.txt', $options['rsync-dir']);
       }
 
       if (file_exists($options['rsync-dir'].'/rsync.txt'))
@@ -159,53 +156,7 @@ EOF;
     }
 
     $dryRun = $options['go'] ? '' : '--dry-run';
-    $command = "rsync $dryRun $parameters -e $ssh ./ $user$host:$dir";
 
-    $this->getFilesystem()->execute($command, $options['trace'] ? array($this, 'logOutput') : null, array($this, 'logErrors'));
-
-    $this->clearBuffers();
-  }
-
-  public function logOutput($output)
-  {
-    if (false !== $pos = strpos($output, "\n"))
-    {
-      $this->outputBuffer .= substr($output, 0, $pos);
-      $this->log($this->outputBuffer);
-      $this->outputBuffer = substr($output, $pos + 1);
-    }
-    else
-    {
-      $this->outputBuffer .= $output;
-    }
-  }
-
-  public function logErrors($output)
-  {
-    if (false !== $pos = strpos($output, "\n"))
-    {
-      $this->errorBuffer .= substr($output, 0, $pos);
-      $this->log($this->formatter->format($this->errorBuffer, 'ERROR'));
-      $this->errorBuffer = substr($output, $pos + 1);
-    }
-    else
-    {
-      $this->errorBuffer .= $output;
-    }
-  }
-
-  protected function clearBuffers()
-  {
-    if ($this->outputBuffer)
-    {
-      $this->log($this->outputBuffer);
-      $this->outputBuffer = '';
-    }
-
-    if ($this->errorBuffer)
-    {
-      $this->log($this->formatter->format($this->errorBuffer, 'ERROR'));
-      $this->errorBuffer = '';
-    }
+    $this->log($this->getFilesystem()->sh("rsync --progress $dryRun $parameters -e $ssh ./ $user$host:$dir"));
   }
 }

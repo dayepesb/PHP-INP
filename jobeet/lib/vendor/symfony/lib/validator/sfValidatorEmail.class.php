@@ -14,12 +14,10 @@
  * @package    symfony
  * @subpackage validator
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfValidatorEmail.class.php 22149 2009-09-18 14:09:53Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfValidatorEmail.class.php 8835 2008-05-07 16:50:28Z nicolas $
  */
 class sfValidatorEmail extends sfValidatorRegex
 {
-  const REGEX_EMAIL = '/^([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})$/i';
-
   /**
    * @see sfValidatorRegex
    */
@@ -27,6 +25,6 @@ class sfValidatorEmail extends sfValidatorRegex
   {
     parent::configure($options, $messages);
 
-    $this->setOption('pattern', self::REGEX_EMAIL);
+    $this->setOption('pattern', '/^([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})$/i');
   }
 }

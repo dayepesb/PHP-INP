@@ -18,7 +18,7 @@
  * @subpackage config
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Sean Kerr <sean@code-box.org>
- * @version    SVN: $Id: sfConfigCache.class.php 32639 2011-06-11 13:28:46Z fabien $
+ * @version    SVN: $Id: sfConfigCache.class.php 17858 2009-05-01 21:22:50Z FabianLange $
  */
 class sfConfigCache
 {
@@ -60,8 +60,8 @@ class sfConfigCache
       $this->mergeUserConfigHandlers();
     }
 
-    // handler instance to call for this configuration file
-    $handlerInstance = null;
+    // handler key to call for this configuration file
+    $handlerKey = null;
 
     $handler = str_replace(DIRECTORY_SEPARATOR, '/', $handler);
 
@@ -70,12 +70,12 @@ class sfConfigCache
     if (isset($this->handlers[$handler]))
     {
       // we have a handler associated with the full configuration path
-      $handlerInstance = $this->getHandler($handler);
+      $handlerKey = $handler;
     }
     else if (isset($this->handlers[$basename]))
     {
       // we have a handler associated with the configuration base name
-      $handlerInstance = $this->getHandler($basename);
+      $handlerKey = $basename;
     }
     else
     {
@@ -83,29 +83,26 @@ class sfConfigCache
       foreach (array_keys($this->handlers) as $key)
       {
         // replace wildcard chars in the configuration
-        $pattern = strtr($key, array('.' => '\.', '*' => '(.*?)'));
-        $matches = array();
+        $pattern = strtr($key, array('.' => '\.', '*' => '.*?'));
 
         // create pattern from config
-        if (preg_match('#'.$pattern.'$#', $handler, $matches))
+        if (preg_match('#'.$pattern.'$#', $handler))
         {
-          $handlerInstance = $this->getHandler($key);
-          array_shift($matches);
-          $handlerInstance->getParameterHolder()->set('wildcardValues', $matches);
+          $handlerKey = $key;
 
           break;
         }
       }
     }
 
-    if (!$handlerInstance)
+    if (!$handlerKey)
     {
       // we do not have a registered handler for this file
       throw new sfConfigurationException(sprintf('Configuration file "%s" does not have a registered handler.', implode(', ', $configs)));
     }
 
     // call the handler and retrieve the cache data
-    $data = $handlerInstance->execute($configs);
+    $data = $this->getHandler($handlerKey)->execute($configs);
 
     $this->writeCacheFile($handler, $cache, $data);
   }
@@ -281,7 +278,7 @@ class sfConfigCache
     // module level configuration handlers
 
     // checks modules directory exists
-    if (!is_readable($sf_app_module_dir = sfConfig::get('sf_app_module_dir')))
+    if (!is_readable($sf_app_modules_dir = sfConfig::get('sf_app_modules_dir')))
     {
       return;
     }
@@ -290,7 +287,7 @@ class sfConfigCache
     $ignore = array('.', '..', 'CVS', '.svn');
 
     // create a file pointer to the module dir
-    $fp = opendir($sf_app_module_dir);
+    $fp = opendir($sf_app_modules_dir);
 
     // loop through the directory and grab the modules
     while (($directory = readdir($fp)) !== false)
@@ -300,7 +297,7 @@ class sfConfigCache
         continue;
       }
 
-      $configPath = $sf_app_module_dir.'/'.$directory.'/config/config_handlers.yml';
+      $configPath = $sf_app_modules_dir.'/'.$directory.'/config/config_handlers.yml';
 
       if (is_readable($configPath))
       {

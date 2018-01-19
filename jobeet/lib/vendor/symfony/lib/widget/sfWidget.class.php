@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage widget
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfWidget.class.php 33596 2012-11-21 14:14:21Z fabien $
+ * @version    SVN: $Id: sfWidget.class.php 21875 2009-09-11 05:54:39Z fabien $
  */
 abstract class sfWidget
 {
@@ -96,14 +96,10 @@ abstract class sfWidget
    * Adds a required option.
    *
    * @param string $name  The option name
-   *
-   * @return sfWidget The current widget instance
    */
   public function addRequiredOption($name)
   {
     $this->requiredOptions[] = $name;
-
-    return $this;
   }
 
   /**
@@ -121,14 +117,10 @@ abstract class sfWidget
    *
    * @param string $name   The option name
    * @param mixed  $value  The default value
-   *
-   * @return sfWidget The current widget instance
    */
   public function addOption($name, $value = null)
   {
     $this->options[$name] = $value;
-
-    return $this;
   }
 
   /**
@@ -136,8 +128,6 @@ abstract class sfWidget
    *
    * @param string $name   The option name
    * @param mixed  $value  The value
-   *
-   * @return sfWidget The current widget instance
    *
    * @throws InvalidArgumentException when a option is not supported
    */
@@ -149,8 +139,6 @@ abstract class sfWidget
     }
 
     $this->options[$name] = $value;
-
-    return $this;
   }
 
   /**
@@ -191,14 +179,10 @@ abstract class sfWidget
    * Sets the options.
    *
    * @param array $options  An array of options
-   *
-   * @return sfWidget The current widget instance
    */
   public function setOptions($options)
   {
     $this->options = $options;
-
-    return $this;
   }
 
   /**
@@ -216,14 +200,10 @@ abstract class sfWidget
    *
    * @param string $name   The attribute name
    * @param string $value  The attribute value
-   *
-   * @return sfWidget The current widget instance
    */
   public function setAttribute($name, $value)
   {
     $this->attributes[$name] = $value;
-
-    return $this;
   }
 
   /**
@@ -242,14 +222,10 @@ abstract class sfWidget
    * Sets the HTML attributes.
    *
    * @param array $attributes  An array of HTML attributes
-   *
-   * @return sfWidget The current widget instance
    */
   public function setAttributes($attributes)
   {
     $this->attributes = $attributes;
-
-    return $this;
   }
 
   /**
@@ -361,7 +337,9 @@ abstract class sfWidget
    */
   static public function escapeOnce($value)
   {
-    return self::fixDoubleEscape(htmlspecialchars(!is_array($value) ? (string) $value : null, ENT_QUOTES, self::getCharset()));
+    $value = is_object($value) ? $value->__toString() : (string) $value;
+
+    return self::fixDoubleEscape(htmlspecialchars($value, ENT_QUOTES, self::getCharset()));
   }
 
   /**
@@ -401,6 +379,6 @@ abstract class sfWidget
    */
   protected function attributesToHtmlCallback($k, $v)
   {
-    return false === $v || null === $v || ('' === $v && 'value' != $k) ? '' : sprintf(' %s="%s"', $k, $this->escapeOnce($v));
+    return false === $v || is_null($v) || ('' === $v && 'value' != $k) ? '' : sprintf(' %s="%s"', $k, $this->escapeOnce($v));
   }
 }

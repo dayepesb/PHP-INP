@@ -6,7 +6,7 @@
  * @package    test
  * @subpackage i18n
  * @author     Your name here
- * @version    SVN: $Id: actions.class.php 24597 2009-11-30 19:53:50Z Kris.Wallsmith $
+ * @version    SVN: $Id: actions.class.php 12854 2008-11-09 20:08:32Z fabien $
  */
 class i18nActions extends sfActions
 {
@@ -28,7 +28,7 @@ class i18nActions extends sfActions
   {
     $this->form = new MovieForm(MoviePeer::retrieveByPk($request->getParameter('id')));
 
-    if ($request->isMethod(sfRequest::POST))
+    if ($request->isMethod('post'))
     {
       $this->form->bind($request->getParameter('movie'));
 
@@ -39,10 +39,5 @@ class i18nActions extends sfActions
         $this->redirect('i18n/movie?id='.$movie->getId());
       }
     }
-  }
-
-  public function executeProducts()
-  {
-    $this->products = ProductPeer::doSelect(new Criteria());
   }
 }

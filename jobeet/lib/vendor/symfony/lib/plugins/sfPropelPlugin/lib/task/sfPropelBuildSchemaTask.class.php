@@ -16,7 +16,7 @@ require_once(dirname(__FILE__).'/sfPropelBaseTask.class.php');
  * @package    symfony
  * @subpackage propel
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfPropelBuildSchemaTask.class.php 23922 2009-11-14 14:58:38Z fabien $
+ * @version    SVN: $Id: sfPropelBuildSchemaTask.class.php 22278 2009-09-23 08:04:37Z fabien $
  */
 class sfPropelBuildSchemaTask extends sfPropelBaseTask
 {
@@ -33,6 +33,7 @@ class sfPropelBuildSchemaTask extends sfPropelBaseTask
       new sfCommandOption('phing-arg', null, sfCommandOption::PARAMETER_REQUIRED | sfCommandOption::IS_ARRAY, 'Arbitrary phing argument'),
     ));
 
+    $this->aliases = array('propel-build-schema');
     $this->namespace = 'propel';
     $this->name = 'build-schema';
     $this->briefDescription = 'Creates a schema from an existing database';
@@ -59,7 +60,7 @@ EOF;
 
     foreach ($databaseManager->getNames() as $connection)
     {
-      if (null !== $options['connection'] && $options['connection'] != $connection)
+      if (!is_null($options['connection']) && $options['connection'] != $connection)
       {
         continue;
       }

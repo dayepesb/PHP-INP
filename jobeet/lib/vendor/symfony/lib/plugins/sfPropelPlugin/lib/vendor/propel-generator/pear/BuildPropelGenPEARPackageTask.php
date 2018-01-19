@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: BuildPropelGenPEARPackageTask.php 1750 2010-05-09 12:33:47Z francois $
+ *  $Id: BuildPropelGenPEARPackageTask.php 985 2008-03-07 02:53:20Z hans $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -27,7 +27,7 @@ include_once 'phing/tasks/ext/pearpackage/Fileset.php';
  *
  * @author     Hans Lellelid <hans@xmpl.org>
  * @package    phing.tasks.ext
- * @version    $Revision: 1750 $
+ * @version    $Revision: 985 $
  */
 class BuildPropelGenPEARPackageTask extends MatchingTask {
 
@@ -121,7 +121,7 @@ class BuildPropelGenPEARPackageTask extends MatchingTask {
 		$package->setPackage('propel_generator');
 		$package->setSummary('Generator component of the Propel PHP object persistence layer');
 		$package->setDescription('Propel is an object persistence layer for PHP5 based on Apache Torque. This package provides the generator engine that builds PHP classes and SQL DDL based on an XML representation of your data model.');
-		$package->setChannel('pear.propelorm.org');
+		$package->setChannel('pear.phpdb.org');
 		$package->setPackageType('php');
 
 		$package->setReleaseVersion($this->version);
@@ -137,7 +137,8 @@ class BuildPropelGenPEARPackageTask extends MatchingTask {
 		// Add package maintainers
 		$package->addMaintainer('lead', 'hans', 'Hans Lellelid', 'hans@xmpl.org');
 		$package->addMaintainer('lead', 'david', 'David Zuelke', 'dz@bitxtender.com');
-		$package->addMaintainer('lead', 'francois', 'Francois Zaninotto', 'fzaninotto@[gmail].com');
+
+
 
 		// (wow ... this is a poor design ...)
 		//
@@ -163,11 +164,12 @@ class BuildPropelGenPEARPackageTask extends MatchingTask {
 
 
 		// "core" dependencies
-		$package->setPhpDep('5.2.4');
+		$package->setPhpDep('5.2.0');
 		$package->setPearinstallerDep('1.4.0');
 
 		// "package" dependencies
 		$package->addPackageDepWithChannel( 'required', 'phing', 'pear.phing.info', '2.3.0');
+		$package->addPackageDepWithChannel( 'optional', 'creole', 'pear.phpdb.org', '1.1.0');
 
 		$package->addExtensionDep('required', 'pdo');
 		$package->addExtensionDep('required', 'xml');

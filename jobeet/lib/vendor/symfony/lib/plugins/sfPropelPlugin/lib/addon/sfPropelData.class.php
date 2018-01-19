@@ -15,7 +15,7 @@
  * @package    symfony
  * @subpackage propel
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfPropelData.class.php 33137 2011-10-18 13:05:25Z fabien $
+ * @version    SVN: $Id: sfPropelData.class.php 21894 2009-09-11 09:28:54Z fabien $
  */
 class sfPropelData extends sfData
 {
@@ -38,7 +38,7 @@ class sfPropelData extends sfData
     $files = $this->getFiles($directoryOrFile);
 
     // load map classes
-    $this->loadMapBuilders($connectionName);
+    $this->loadMapBuilders();
     $this->dbMap = Propel::getDatabaseMap($connectionName);
 
     // wrap all database operations in a single transaction
@@ -135,7 +135,7 @@ class sfPropelData extends sfData
           // foreign key?
           if ($isARealColumn)
           {
-            if ($column->isForeignKey() && null !== $value)
+            if ($column->isForeignKey() && !is_null($value))
             {
               $relatedTable = $this->dbMap->getTable($column->getRelatedTableName());
               if (!isset($this->object_references[$relatedTable->getPhpName().'_'.$value]))
@@ -267,17 +267,20 @@ class sfPropelData extends sfData
    *
    * @throws sfException If the class cannot be found
    */
-  protected function loadMapBuilders($connectionName)
+  protected function loadMapBuilders()
   {
-    $dbMap = Propel::getDatabaseMap();
-    $files = sfFinder::type('file')->name('*TableMap.php')->in(sfProjectConfiguration::getActive()->getModelDirs());
+    $files = sfFinder::type('file')->name('*MapBuilder.php')->in(sfProjectConfiguration::getActive()->getModelDirs());
     foreach ($files as $file)
     {
-      $omClass = basename($file, 'TableMap.php');
-      if (class_exists($omClass) && is_subclass_of($omClass, 'BaseObject') && constant($omClass.'Peer::DATABASE_NAME') == $connectionName)
+      $omClass = basename($file, 'MapBuilder.php');
+      if (class_exists($omClass) && is_subclass_of($omClass, 'BaseObject'))
       {
-        $tableMapClass = basename($file, '.php');
-        $dbMap->addTableFromMapClass($tableMapClass);
+        $mapBuilderClass = basename($file, '.php');
+        $map = new $mapBuilderClass();
+        if (!$map->isBuilt())
+        {
+          $map->doBuild();
+        }
       }
     }
   }
@@ -323,12 +326,12 @@ class sfPropelData extends sfData
    */
   public function getData($tables = 'all', $connectionName = 'propel')
   {
-    $this->loadMapBuilders($connectionName);
+    $this->loadMapBuilders();
     $this->con = Propel::getConnection($connectionName);
     $this->dbMap = Propel::getDatabaseMap($connectionName);
 
     // get tables
-    if ('all' === $tables || null === $tables)
+    if ('all' === $tables || is_null($tables))
     {
       $tables = array();
       foreach ($this->dbMap->getTables() as $table)
@@ -415,7 +418,7 @@ class sfPropelData extends sfData
               $col = strtolower($column->getName());
               $isPrimaryKey = $column->isPrimaryKey();
 
-              if (null === $row[$col])
+              if (is_null($row[$col]))
               {
                 continue;
               }
@@ -508,7 +511,7 @@ class sfPropelData extends sfData
     $sql = sprintf('SELECT * FROM %s WHERE %s %s',
                    constant(constant($tableName.'::PEER').'::TABLE_NAME'),
                    strtolower($column->getName()),
-                   null === $in ? 'IS NULL' : 'IN ('.$in.')');
+                   is_null($in) ? 'IS NULL' : 'IN ('.$in.')');
     $stmt = $this->con->prepare($sql);
 
     $stmt->execute();

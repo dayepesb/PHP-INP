@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage filter
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id$
+ * @version    SVN: $Id: sfCommonFilter.class.php 11783 2008-09-25 16:21:27Z fabien $
  */
 class sfCommonFilter extends sfFilter
 {

@@ -143,48 +143,46 @@ class sfVarLogger extends sfLogger
     }
 
     $this->logs[] = array(
-      'priority'        => $priority,
-      'priority_name'   => $this->getPriorityName($priority),
-      'time'            => time(),
-      'message'         => $message,
-      'type'            => $type,
-      'debug_backtrace' => $this->getDebugBacktrace(),
+      'priority'      => $priority,
+      'priority_name' => $this->getPriorityName($priority),
+      'time'          => time(),
+      'message'       => $message,
+      'type'          => $type,
+      'debug_stack'   => $this->getXDebugStack(),
     );
   }
 
   /**
-   * Returns the debug stack.
+   * Returns the xdebug stack.
    *
-   * @return array
-   * 
-   * @see debug_backtrace()
+   * @return array The xdebug stack as an array
    */
-  protected function getDebugBacktrace()
+  protected function getXDebugStack()
   {
     // if we have xdebug and dev has not disabled the feature, add some stack information
-    if (!$this->xdebugLogging || !function_exists('debug_backtrace'))
+    if (!$this->xdebugLogging || !function_exists('xdebug_get_function_stack'))
     {
       return array();
     }
 
-    $traces = debug_backtrace();
-
-    // remove sfLogger and sfEventDispatcher from the top of the trace
-    foreach ($traces as $i => $trace)
+    $debugStack = array();
+    foreach (xdebug_get_function_stack() as $i => $stack)
     {
-      $class = isset($trace['class']) ? $trace['class'] : substr($file = basename($trace['file']), 0, strpos($file, '.'));
-
       if (
-        !class_exists($class)
-        ||
-        (!in_array($class, array('sfLogger', 'sfEventDispatcher')) && !is_subclass_of($class, 'sfLogger') && !is_subclass_of($class, 'sfEventDispatcher'))
+        (isset($stack['function']) && !in_array($stack['function'], array('emerg', 'alert', 'crit', 'err', 'warning', 'notice', 'info', 'debug', 'log')))
+        || !isset($stack['function'])
       )
       {
-        $traces = array_slice($traces, $i);
-        break;
+        $tmp = '';
+        if (isset($stack['function']))
+        {
+          $tmp .= sprintf('in "%s" ', $stack['function']);
+        }
+        $tmp .= sprintf('from "%s" line %s', $stack['file'], $stack['line']);
+        $debugStack[] = $tmp;
       }
     }
 
-    return $traces;
+    return $debugStack;
   }
 }

@@ -75,7 +75,7 @@ class sfFormField
    */
   static public function hasToStringException()
   {
-    return null !== self::$toStringException;
+    return !is_null(self::$toStringException);
   }
 
   /**
@@ -99,7 +99,7 @@ class sfFormField
    */
   static public function setToStringException(Exception $e)
   {
-    if (null === self::$toStringException)
+    if (is_null(self::$toStringException))
     {
       self::$toStringException = $e;
     }
@@ -139,7 +139,7 @@ class sfFormField
    */
   public function renderRow($attributes = array(), $label = null, $help = null)
   {
-    if (null === $this->parent)
+    if (is_null($this->parent))
     {
       throw new LogicException(sprintf('Unable to render the row for "%s".', $this->name));
     }
@@ -148,7 +148,7 @@ class sfFormField
 
     $error = $this->error instanceof sfValidatorErrorSchema ? $this->error->getGlobalErrors() : $this->error;
 
-    $help = null === $help ? $this->parent->getWidget()->getHelp($this->name) : $help;
+    $help = is_null($help) ? $this->parent->getWidget()->getHelp($this->name) : $help;
 
     return strtr($this->parent->getWidget()->getFormFormatter()->formatRow($this->renderLabel($label), $field, $error, $help), array('%hidden_fields%' => ''));
   }
@@ -162,7 +162,7 @@ class sfFormField
    */
   public function renderError()
   {
-    if (null === $this->parent)
+    if (is_null($this->parent))
     {
       throw new LogicException(sprintf('Unable to render the error for "%s".', $this->name));
     }
@@ -179,7 +179,7 @@ class sfFormField
    */
   public function renderHelp()
   {
-    if (null === $this->parent)
+    if (is_null($this->parent))
     {
       throw new LogicException(sprintf('Unable to render the help for "%s".', $this->name));
     }
@@ -197,12 +197,12 @@ class sfFormField
    */
   public function renderLabel($label = null, $attributes = array())
   {
-    if (null === $this->parent)
+    if (is_null($this->parent))
     {
       throw new LogicException(sprintf('Unable to render the label for "%s".', $this->name));
     }
 
-    if (null !== $label)
+    if (!is_null($label))
     {
       $currentLabel = $this->parent->getWidget()->getLabel($this->name);
       $this->parent->getWidget()->setLabel($this->name, $label);
@@ -210,7 +210,7 @@ class sfFormField
 
     $html = $this->parent->getWidget()->getFormFormatter()->generateLabel($this->name, $attributes);
 
-    if (null !== $label)
+    if (!is_null($label))
     {
       $this->parent->getWidget()->setLabel($this->name, $currentLabel);
     }
@@ -225,22 +225,12 @@ class sfFormField
    */
   public function renderLabelName()
   {
-    if (null === $this->parent)
+    if (is_null($this->parent))
     {
       throw new LogicException(sprintf('Unable to render the label name for "%s".', $this->name));
     }
 
     return $this->parent->getWidget()->getFormFormatter()->generateLabelName($this->name);
-  }
-
-  /**
-   * Returns the name attribute of the widget.
-   * 
-   * @return string The name attribute of the widget
-   */
-  public function renderName()
-  {
-    return $this->parent ? $this->parent->getWidget()->generateName($this->name) : $this->name;
   }
 
   /**
@@ -320,6 +310,6 @@ class sfFormField
    */
   public function hasError()
   {
-    return null !== $this->error && count($this->error);
+    return !is_null($this->error) && count($this->error);
   }
 }

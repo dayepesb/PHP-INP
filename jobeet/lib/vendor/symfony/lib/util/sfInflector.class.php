@@ -13,7 +13,7 @@
  * @package    symfony
  * @subpackage util
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfInflector.class.php 23810 2009-11-12 11:07:44Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfInflector.class.php 13896 2008-12-09 22:32:41Z FabianLange $
  */
 class sfInflector
 {
@@ -27,8 +27,11 @@ class sfInflector
    */
   public static function camelize($lower_case_and_underscored_word)
   {
+    $tmp = $lower_case_and_underscored_word;
+    $tmp = sfToolkit::pregtr($tmp, array('#/(.?)#e'    => "'::'.strtoupper('\\1')",
+                                         '/(^|_|-)+(.)/e' => "strtoupper('\\2')"));
 
-      return str_replace(' ','',ucwords(preg_replace('/[^A-Z^a-z^0-9]+/',' ',$lower_case_and_underscored_word)));
+    return $tmp;
   }
 
   /**

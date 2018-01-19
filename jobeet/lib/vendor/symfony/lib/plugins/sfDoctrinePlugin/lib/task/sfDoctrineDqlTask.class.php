@@ -18,7 +18,7 @@ require_once(dirname(__FILE__).'/sfDoctrineBaseTask.class.php');
  * @subpackage doctrine
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Jonathan H. Wage <jonwage@gmail.com>
- * @version    SVN: $Id: sfDoctrineDqlTask.class.php 24625 2009-12-01 00:05:40Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfDoctrineDqlTask.class.php 14213 2008-12-19 21:03:13Z Jonathan.Wage $
  */
 class sfDoctrineDqlTask extends sfDoctrineBaseTask
 {
@@ -29,33 +29,27 @@ class sfDoctrineDqlTask extends sfDoctrineBaseTask
   {
     $this->addArguments(array(
       new sfCommandArgument('dql_query', sfCommandArgument::REQUIRED, 'The DQL query to execute', null),
-      new sfCommandArgument('parameter', sfCommandArgument::OPTIONAL | sfCommandArgument::IS_ARRAY, 'Query parameter'),
     ));
 
     $this->addOptions(array(
       new sfCommandOption('application', null, sfCommandOption::PARAMETER_OPTIONAL, 'The application name', true),
       new sfCommandOption('env', null, sfCommandOption::PARAMETER_REQUIRED, 'The environment', 'dev'),
       new sfCommandOption('show-sql', null, sfCommandOption::PARAMETER_NONE, 'Show the sql that would be executed'),
-      new sfCommandOption('table', null, sfCommandOption::PARAMETER_NONE, 'Return results in table format'),
     ));
 
+    $this->aliases = array('doctrine-dql');
     $this->namespace = 'doctrine';
     $this->name = 'dql';
     $this->briefDescription = 'Execute a DQL query and view the results';
 
     $this->detailedDescription = <<<EOF
-The [doctrine:dql|INFO] task executes a DQL query and displays the formatted
-results:
+The [doctrine:data-dql|INFO] task executes a DQL query and display the formatted results:
 
-  [./symfony doctrine:dql "FROM User"|INFO]
+  [./symfony doctrine:dql "FROM User u"|INFO]
 
-You can show the SQL that would be executed by using the [--show-sql|COMMENT] option:
+You can show the SQL that would be executed by using the [--dir|COMMENT] option:
 
-  [./symfony doctrine:dql --show-sql "FROM User"|INFO]
-
-Provide query parameters as additional arguments:
-
-  [./symfony doctrine:dql "FROM User WHERE email LIKE ?" "%symfony-project.com"|INFO]
+  [./symfony doctrine:dql --show-sql "FROM User u"|INFO]
 EOF;
   }
 
@@ -69,109 +63,31 @@ EOF;
     $dql = $arguments['dql_query'];
 
     $q = Doctrine_Query::create()
-      ->parseDqlQuery($dql);
+      ->parseQuery($dql);
 
     $this->logSection('doctrine', 'executing dql query');
-    $this->log(sprintf('DQL: %s', $dql));
 
-    if ($options['show-sql'])
-    {
-      $this->log(sprintf('SQL: %s', $q->getSqlQuery($arguments['parameter'])));
+    echo sprintf('DQL: %s', $dql) . "\n";
+
+    if ($options['show-sql']) {
+      echo sprintf('SQL: %s', $q->getSql()) . "\n";
     }
 
-    $count = $q->count($arguments['parameter']);
+    $count = $q->count();
 
     if ($count)
     {
-      if (!$options['table'])
+      echo sprintf('found %s results', $count) . "\n";
+
+      $results = $q->fetchArray();
+      $yaml = sfYaml::dump($results, 4);
+      $lines = explode("\n", $yaml);
+      foreach ($lines as $line)
       {
-        $results = $q->fetchArray($arguments['parameter']);
-
-        $this->log(array(
-          sprintf('found %s results', number_format($count)),
-          sfYaml::dump($results, 4),
-        ));
+        echo $line . "\n";
       }
-      else
-      {
-        $results = $q->execute($arguments['parameter'], Doctrine_Core::HYDRATE_SCALAR);
-
-        $headers = array();
-
-        // calculate lengths
-        foreach ($results as $result)
-        {
-          foreach ($result as $field => $value)
-          {
-            if (!isset($headers[$field]))
-            {
-              $headers[$field] = 0;
-            }
-
-            $headers[$field] = max($headers[$field], strlen($this->renderValue($value)));
-          }
-        }
-
-        // print header
-        $hdr = '|';
-        $div = '+';
-
-        foreach ($headers as $field => & $length)
-        {
-          if ($length < strlen($field))
-          {
-            $length = strlen($field);
-          }
-
-          $hdr .= ' '.str_pad($field, $length).' |';
-          $div .= str_repeat('-', $length + 2).'+';
-        }
-
-        $this->log(array($div, $hdr, $div));
-
-        // print results
-        foreach ($results as $result)
-        {
-          $line = '|';
-          foreach ($result as $field => $value)
-          {
-            $line .= ' '.str_pad($this->renderValue($value), $headers[$field]).' |';
-          }
-          $this->log($line);
-        }
-
-        $this->log($div);
-
-        // find profiler
-        if ($profiler = $q->getConnection()->getListener()->get('symfony_profiler'))
-        {
-          $events = $profiler->getQueryExecutionEvents();
-          $event = array_pop($events);
-          $this->log(sprintf('%s results (%s sec)', number_format($count), number_format($event->getElapsedSecs(), 2)));
-        }
-        else
-        {
-          $this->log(sprintf('%s results', number_format($count)));
-        }
-
-        $this->log('');
-      }
-    }
-    else
-    {
+    } else {
       $this->logSection('doctrine', 'no results found');
     }
-  }
-
-  /**
-   * Renders the supplied value.
-   *
-   * @param string|null $value
-   *
-   * @return string
-   */
-  protected function renderValue($value)
-  {
-    return null === $value ? 'NULL' : $value;
   }
 }

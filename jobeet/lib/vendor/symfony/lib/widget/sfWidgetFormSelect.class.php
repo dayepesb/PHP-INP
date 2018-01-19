@@ -3,7 +3,7 @@
 /*
  * This file is part of the symfony package.
  * (c) Fabien Potencier <fabien.potencier@symfony-project.com>
- *
+ * 
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
@@ -14,9 +14,9 @@
  * @package    symfony
  * @subpackage widget
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfWidgetFormSelect.class.php 30762 2010-08-25 12:33:33Z fabien $
+ * @version    SVN: $Id: sfWidgetFormSelect.class.php 17068 2009-04-07 08:24:53Z fabien $
  */
-class sfWidgetFormSelect extends sfWidgetFormChoiceBase
+class sfWidgetFormSelect extends sfWidgetForm
 {
   /**
    * Constructor.
@@ -29,18 +29,15 @@ class sfWidgetFormSelect extends sfWidgetFormChoiceBase
    * @param array $options     An array of options
    * @param array $attributes  An array of default HTML attributes
    *
-   * @see sfWidgetFormChoiceBase
+   * @see sfWidgetForm
    */
   protected function configure($options = array(), $attributes = array())
   {
-    parent::configure($options, $attributes);
-
+    $this->addRequiredOption('choices');
     $this->addOption('multiple', false);
   }
 
   /**
-   * Renders the widget.
-   *
    * @param  string $name        The element name
    * @param  string $value       The value selected in this widget
    * @param  array  $attributes  An array of HTML attributes to be merged with the default HTML attributes
@@ -62,7 +59,11 @@ class sfWidgetFormSelect extends sfWidgetFormChoiceBase
       }
     }
 
-    $choices = $this->getChoices();
+    $choices = $this->getOption('choices');
+    if ($choices instanceof sfCallable)
+    {
+      $choices = $choices->call();
+    }
 
     return $this->renderContentTag('select', "\n".implode("\n", $this->getOptionsForSelect($value, $choices))."\n", array_merge(array('name' => $name), $attributes));
   }
@@ -87,7 +88,7 @@ class sfWidgetFormSelect extends sfWidgetFormChoiceBase
 
     $value = array_map('strval', array_values($value));
     $value_set = array_flip($value);
-
+    
     $options = array();
     foreach ($choices as $key => $option)
     {
@@ -110,5 +111,19 @@ class sfWidgetFormSelect extends sfWidgetFormChoiceBase
     $this->attributes = $mainAttributes;
 
     return $options;
+  }
+
+  public function __clone()
+  {
+    if ($this->getOption('choices') instanceof sfCallable)
+    {
+      $callable = $this->getOption('choices')->getCallable();
+      $class = __CLASS__;
+      if (is_array($callable) && $callable[0] instanceof $class)
+      {
+        $callable[0] = $this;
+        $this->setOption('choices', new sfCallable($callable));
+      }
+    }
   }
 }

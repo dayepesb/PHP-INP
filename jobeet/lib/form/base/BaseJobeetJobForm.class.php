@@ -3,38 +3,36 @@
 /**
  * JobeetJob form base class.
  *
- * @method JobeetJob getObject() Returns the current form's model object
- *
  * @package    jobeet
  * @subpackage form
  * @author     Your name here
  */
-abstract class BaseJobeetJobForm extends BaseFormPropel
+class BaseJobeetJobForm extends BaseFormPropel
 {
   public function setup()
   {
     $this->setWidgets(array(
       'id'           => new sfWidgetFormInputHidden(),
       'category_id'  => new sfWidgetFormPropelChoice(array('model' => 'JobeetCategory', 'add_empty' => false)),
-      'type'         => new sfWidgetFormInputText(),
-      'company'      => new sfWidgetFormInputText(),
-      'logo'         => new sfWidgetFormInputText(),
-      'url'          => new sfWidgetFormInputText(),
-      'position'     => new sfWidgetFormInputText(),
-      'location'     => new sfWidgetFormInputText(),
+      'type'         => new sfWidgetFormInput(),
+      'company'      => new sfWidgetFormInput(),
+      'logo'         => new sfWidgetFormInput(),
+      'url'          => new sfWidgetFormInput(),
+      'position'     => new sfWidgetFormInput(),
+      'location'     => new sfWidgetFormInput(),
       'description'  => new sfWidgetFormTextarea(),
       'how_to_apply' => new sfWidgetFormTextarea(),
-      'token'        => new sfWidgetFormInputText(),
+      'token'        => new sfWidgetFormInput(),
       'is_public'    => new sfWidgetFormInputCheckbox(),
       'is_activated' => new sfWidgetFormInputCheckbox(),
-      'email'        => new sfWidgetFormInputText(),
+      'email'        => new sfWidgetFormInput(),
       'expires_at'   => new sfWidgetFormDateTime(),
       'created_at'   => new sfWidgetFormDateTime(),
       'updated_at'   => new sfWidgetFormDateTime(),
     ));
 
     $this->setValidators(array(
-      'id'           => new sfValidatorChoice(array('choices' => array($this->getObject()->getId()), 'empty_value' => $this->getObject()->getId(), 'required' => false)),
+      'id'           => new sfValidatorPropelChoice(array('model' => 'JobeetJob', 'column' => 'id', 'required' => false)),
       'category_id'  => new sfValidatorPropelChoice(array('model' => 'JobeetCategory', 'column' => 'id')),
       'type'         => new sfValidatorString(array('max_length' => 255, 'required' => false)),
       'company'      => new sfValidatorString(array('max_length' => 255)),

@@ -16,7 +16,7 @@
  * @package    symfony
  * @subpackage util
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfBrowserBase.class.php 33373 2012-03-08 15:45:46Z fabien $
+ * @version    SVN: $Id: sfBrowserBase.class.php 27616 2010-02-06 11:14:40Z FabianLange $
  */
 abstract class sfBrowserBase
 {
@@ -32,8 +32,7 @@ abstract class sfBrowserBase
     $vars               = array(),
     $defaultServerArray = array(),
     $headers            = array(),
-    $currentException   = null,
-    $domCssSelector     = null;
+    $currentException   = null;
 
   /**
    * Class constructor.
@@ -64,8 +63,8 @@ abstract class sfBrowserBase
     unset($_SERVER['argc']);
 
     // setup our fake environment
-    $this->hostname = null === $hostname ? 'localhost' : $hostname;
-    $this->remote   = null === $remote ? '127.0.0.1' : $remote;
+    $this->hostname = is_null($hostname) ? 'localhost' : $hostname;
+    $this->remote   = is_null($remote) ? '127.0.0.1' : $remote;
 
     // we set a session id (fake cookie / persistence)
     $this->newSession();
@@ -115,7 +114,7 @@ abstract class sfBrowserBase
    * @param  string  $domain   Domain name
    * @param  bool    $secure   If secure
    * @param  bool    $httpOnly If uses only HTTP
-   *
+   * 
    * @return sfBrowserBase     This sfBrowserBase instance
    */
   public function setCookie($name, $value, $expire = null, $path = '/', $domain = '', $secure = false, $httpOnly = false)
@@ -278,7 +277,7 @@ abstract class sfBrowserBase
       if (isset($parameters['_with_csrf']) && $parameters['_with_csrf'])
       {
         unset($parameters['_with_csrf']);
-        $form = new BaseForm();
+        $form = new sfForm();
         $parameters[$form->getCSRFFieldName()] = $form->getCSRFToken();
       }
 
@@ -425,13 +424,13 @@ abstract class sfBrowserBase
   }
 
   /**
-   * Get response DOM CSS selector.
+   * Get response dom css selector.
    *
    * @return sfDomCssSelector
    */
   public function getResponseDomCssSelector()
   {
-    if (null === $this->domCssSelector)
+    if (is_null($this->dom))
     {
       throw new LogicException('The DOM is not accessible because the browser response content type is not HTML.');
     }
@@ -440,25 +439,13 @@ abstract class sfBrowserBase
   }
 
   /**
-   * Get the response DOM XPath selector.
-   *
-   * @return DOMXPath
-   *
-   * @uses getResponseDom()
-   */
-  public function getResponseDomXpath()
-  {
-    return new DOMXPath($this->getResponseDom());
-  }
-
-  /**
-   * Get response DOM.
+   * Get response dom.
    *
    * @return sfDomCssSelector
    */
   public function getResponseDom()
   {
-    if (null === $this->dom)
+    if (is_null($this->dom))
     {
       throw new LogicException('The DOM is not accessible because the browser response content type is not HTML.');
     }
@@ -513,7 +500,6 @@ abstract class sfBrowserBase
   public function resetCurrentException()
   {
     $this->currentException = null;
-    sfException::clearLastException();
   }
 
   /**
@@ -523,7 +509,7 @@ abstract class sfBrowserBase
    */
   public function checkCurrentExceptionIsEmpty()
   {
-    return null === $this->getCurrentException() || $this->getCurrentException() instanceof sfError404Exception;
+    return is_null($this->getCurrentException()) || $this->getCurrentException() instanceof sfError404Exception;
   }
 
   /**
@@ -602,9 +588,17 @@ abstract class sfBrowserBase
    */
   public function doSelect($name, $selected)
   {
-    $xpath = $this->getResponseDomXpath();
+    $position = 0;
+    $dom = $this->getResponseDom();
 
-    if ($element = $xpath->query(sprintf('//input[(@type="radio" or @type="checkbox") and (.="%s" or @id="%s" or @name="%s")]', $name, $name, $name))->item(0))
+    if (!$dom)
+    {
+      throw new LogicException('Cannot select because there is no current page in the browser.');
+    }
+
+    $xpath = new DomXpath($dom);
+
+    if ($element = $xpath->query(sprintf('//input[(@type="radio" or @type="checkbox") and (.="%s" or @id="%s" or @name="%s")]', $name, $name, $name))->item($position))
     {
       if ($selected)
       {
@@ -636,38 +630,17 @@ abstract class sfBrowserBase
   /**
    * Simulates a click on a link or button.
    *
-   * Available options:
-   *
-   *  * position: The position of the linked to link if several ones have the same name
-   *              (the first one is 1, not 0)
-   *  * method:   The method to used instead of the form ones
-   *              (useful when you need to click on a link that is converted to a form with JavaScript code)
-   *
-   * @param  string|DOMElement $name      The link, button text, CSS selector or DOMElement
-   * @param  array             $arguments The arguments to pass to the link
-   * @param  array             $options   An array of options
+   * @param string  $name       The link or button text
+   * @param array   $arguments  The arguments to pass to the link
+   * @param array   $options    An array of options
    *
    * @return sfBrowserBase
    *
-   * @uses   doClickElement() doClick() doClickCssSelector()
+   * @see    doClick()
    */
   public function click($name, $arguments = array(), $options = array())
   {
-    if ($name instanceof DOMElement)
-    {
-      list($uri, $method, $parameters) = $this->doClickElement($name, $arguments, $options);
-    }
-    else
-    {
-      try
-      {
-        list($uri, $method, $parameters) = $this->doClick($name, $arguments, $options);
-      }
-      catch (InvalidArgumentException $e)
-      {
-        list($uri, $method, $parameters) = $this->doClickCssSelector($name, $arguments, $options);
-      }
-    }
+    list($uri, $method, $parameters) = $this->doClick($name, $arguments, $options);
 
     return $this->call($uri, $method, $parameters);
   }
@@ -675,91 +648,46 @@ abstract class sfBrowserBase
   /**
    * Simulates a click on a link or button.
    *
-   * This method is called internally by the {@link click()} method.
+   * This method is called internally by the click() method.
    *
-   * @param  string $name      The link or button text
-   * @param  array  $arguments The arguments to pass to the link
-   * @param  array  $options   An array of options
+   * Available options:
    *
-   * @return array An array composed of the URI, the method and the arguments to pass to the {@link call()} call
+   *  * position: The position of the linked to link if several ones have the same name
+   *              (the first one is 1, not 0)
+   *  * method:   The method to used instead of the form ones
+   *              (useful when you need to click on a link that is converted to a form with JavaScript code)
    *
-   * @uses   getResponseDomXpath() doClickElement()
-   * @throws InvalidArgumentException If a matching element cannot be found
+   * @param string  $name       The link or button text
+   * @param array   $arguments  The arguments to pass to the link
+   * @param array   $options    An array of options
    *
-   * @deprecated call {@link click()} using a CSS selector instead
+   * @return array An array composed of the URI, the method and the arguments to pass to the call() call
    */
   public function doClick($name, $arguments = array(), $options = array())
   {
-    if (false !== strpos($name, '[') || false !== strpos($name, ']'))
+    $position = isset($options['position']) ? $options['position'] - 1 : 0;
+
+    $dom = $this->getResponseDom();
+
+    if (!$dom)
     {
-      throw new InvalidArgumentException(sprintf('The name "%s" is not valid', $name));
+      throw new LogicException('Cannot click because there is no current page in the browser.');
     }
+
+    $xpath = new DomXpath($dom);
+
+    $method = strtolower(isset($options['method']) ? $options['method'] : 'get');
 
     $query  = sprintf('//a[.="%s"]', $name);
     $query .= sprintf('|//a/img[@alt="%s"]/ancestor::a', $name);
-    $query .= sprintf('|//input[((@type="submit" or @type="button") and @value="%s") or (@type="image" and @alt="%s")]', $name, $name);
-    $query .= sprintf('|//button[.="%s" or @id="%s" or @name="%s"]', $name, $name, $name);
-
-    if (!$list = @$this->getResponseDomXpath()->query($query))
-    {
-      throw new InvalidArgumentException(sprintf('The name "%s" is not valid', $name));
-    }
-
-    $position = isset($options['position']) ? $options['position'] - 1 : 0;
+    $query .= sprintf('|//input[((@type="submit" or @type="button") and @value="%s") or (@type="image" and @alt="%s")]/ancestor::form', $name, $name);
+    $query .= sprintf('|//button[.="%s" or @id="%s" or @name="%s"]/ancestor::form', $name, $name, $name);
+    $list = $xpath->query($query);
 
     if (!$item = $list->item($position))
     {
-      throw new InvalidArgumentException(sprintf('Cannot find the "%s" link or button (position %d).', $name, $position + 1));
+      throw new InvalidArgumentException(sprintf('Cannot find the "%s" link or button.', $name));
     }
-
-    return $this->doClickElement($item, $arguments, $options);
-  }
-
-  /**
-   * Simulates a click on an element indicated by CSS selector.
-   *
-   * This method is called internally by the {@link click()} method.
-   *
-   * @param  string $selector  The CSS selector
-   * @param  array  $arguments The arguments to pass to the link
-   * @param  array  $options   An array of options
-   *
-   * @return array An array composed of the URI, the method and the arguments to pass to the {@link call()} call
-   *
-   * @uses   getResponseDomCssSelector() doClickElement()
-   * @throws InvalidArgumentException If a matching element cannot be found
-   */
-  public function doClickCssSelector($selector, $arguments = array(), $options = array())
-  {
-    $elements = $this->getResponseDomCssSelector()->matchAll($selector)->getNodes();
-    $position = isset($options['position']) ? $options['position'] - 1 : 0;
-
-    if (isset($elements[$position]))
-    {
-      return $this->doClickElement($elements[$position], $arguments, $options);
-    }
-    else
-    {
-      throw new InvalidArgumentException(sprintf('Could not find the element "%s" (position %d) in the current DOM.', $selector, $position + 1));
-    }
-  }
-
-  /**
-   * Simulates a click on the supplied DOM element.
-   *
-   * This method is called internally by the {@link click()} method.
-   *
-   * @param  DOMElement $item      The element being clicked
-   * @param  array      $arguments The arguments to pass to the link
-   * @param  array      $options   An array of options
-   *
-   * @return array An array composed of the URI, the method and the arguments to pass to the call() call
-   *
-   * @uses getResponseDomXpath()
-   */
-  public function doClickElement(DOMElement $item, $arguments = array(), $options = array())
-  {
-    $method = strtolower(isset($options['method']) ? $options['method'] : 'get');
 
     if ('a' == $item->nodeName)
     {
@@ -777,21 +705,6 @@ abstract class sfBrowserBase
         return array($item->getAttribute('href'), 'get', $arguments);
       }
     }
-    else if ('button' == $item->nodeName || ('input' == $item->nodeName && in_array($item->getAttribute('type'), array('submit', 'button', 'image'))))
-    {
-      // add the item's value to the arguments
-      $this->parseArgumentAsArray($item->getAttribute('name'), $item->getAttribute('value'), $arguments);
-
-      // use the ancestor form element
-      do
-      {
-        if (null === $item = $item->parentNode)
-        {
-          throw new Exception('The clicked form element does not have a form ancestor.');
-        }
-      }
-      while ('form' != $item->nodeName);
-    }
 
     // form attributes
     $url = $item->getAttribute('action');
@@ -805,14 +718,8 @@ abstract class sfBrowserBase
     $defaults = array();
     $arguments = sfToolkit::arrayDeepMerge($this->fields, $arguments);
 
-    $xpath = $this->getResponseDomXpath();
     foreach ($xpath->query('descendant::input | descendant::textarea | descendant::select', $item) as $element)
     {
-      if ($element->hasAttribute('disabled'))
-      {
-        continue;
-      }
-
       $elementName = $element->getAttribute('name');
       $nodeName    = $element->nodeName;
       $value       = null;
@@ -843,7 +750,13 @@ abstract class sfBrowserBase
 
         $this->parseArgumentAsArray($elementName, array('name' => basename($filename), 'type' => '', 'tmp_name' => $filename, 'error' => $fileError, 'size' => $fileSize), $this->files);
       }
-      else if ('input' == $nodeName && !in_array($element->getAttribute('type'), array('submit', 'button', 'image')))
+      else if (
+        $nodeName == 'input'
+        &&
+        (($element->getAttribute('type') != 'submit' && $element->getAttribute('type') != 'button') || $element->getAttribute('value') == $name)
+        &&
+        ($element->getAttribute('type') != 'image' || $element->getAttribute('alt') == $name)
+      )
       {
         $value = $element->getAttribute('value');
       }
@@ -852,7 +765,7 @@ abstract class sfBrowserBase
         $value = '';
         foreach ($element->childNodes as $el)
         {
-          $value .= $this->getResponseDom()->saveXML($el);
+          $value .= $dom->saveXML($el);
         }
       }
       else if ($nodeName == 'select')
@@ -930,7 +843,7 @@ abstract class sfBrowserBase
       {
         $var = &$var[$tmp];
       }
-      if ($var && '[]' === substr($name, -2))
+      if ($var)
       {
         if (!is_array($var))
         {

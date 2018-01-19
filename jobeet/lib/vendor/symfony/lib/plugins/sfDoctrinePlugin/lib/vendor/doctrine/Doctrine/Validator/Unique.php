@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Unique.php 7490 2010-03-29 19:53:27Z jwage $
+ *  $Id: Unique.php 6398 2009-09-24 14:36:27Z guilhermeblanco $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -16,7 +16,7 @@
  *
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information, see
- * <http://www.doctrine-project.org>.
+ * <http://www.phpdoctrine.org>.
  */
 
 /**
@@ -25,12 +25,12 @@
  * @package     Doctrine
  * @subpackage  Validator
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
- * @link        www.doctrine-project.org
+ * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 7490 $
+ * @version     $Revision: 6398 $
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  */
-class Doctrine_Validator_Unique extends Doctrine_Validator_Driver
+class Doctrine_Validator_Unique
 {
     /**
      * checks if given value is unique
@@ -53,23 +53,14 @@ class Doctrine_Validator_Unique extends Doctrine_Validator_Driver
                 $pks[$i] = $conn->quoteIdentifier($pks[$i]);
             }
             
-            $pks = implode(', ', $pks);
+            $pks = join(',', $pks);
         }
 
-        $sql = 'SELECT ' . $pks . ' FROM ' . $conn->quoteIdentifier($table->getTableName()) . ' WHERE ';
+        $sql = 'SELECT ' . $pks . ' FROM ' . $conn->quoteIdentifier($table->getTableName()) 
+             . ' WHERE ' . $conn->quoteIdentifier($table->getColumnName($this->field)) . ' = ?';
         
-        if (is_array($this->field)) {
-            foreach ($this->field as $k => $v) {
-                $this->field[$k] = $conn->quoteIdentifier($table->getColumnName($v));
-            }
-        
-            $sql .= implode(' = ? AND ', $this->field) . ' = ?';
-            $values = $value;
-        } else {
-            $sql .= $conn->quoteIdentifier($table->getColumnName($this->field)) . ' = ?';
-            $values = array();
-            $values[] = $value;
-        }
+        $values = array();
+        $values[] = $value;
         
         // If the record is not new we need to add primary key checks because its ok if the 
         // unique value already exists in the database IF the record in the database is the same
@@ -82,11 +73,7 @@ class Doctrine_Validator_Unique extends Doctrine_Validator_Driver
                 $values[] = $this->invoker->$pkFieldName;
             }
         }
-
-        if (isset($this->args) && is_array($this->args) && isset($this->args['where'])) {
-            $sql .= ' AND ' . $this->args['where'];
-        }
-
+        
         $stmt  = $table->getConnection()->getDbh()->prepare($sql);
         $stmt->execute($values);
 

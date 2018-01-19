@@ -16,33 +16,33 @@
  * @subpackage doctrine
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Jonathan H. Wage <jonwage@gmail.com>
- * @version    SVN: $Id: sfDoctrineCli.class.php 23810 2009-11-12 11:07:44Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfDoctrineCli.class.php 13851 2008-12-08 22:54:16Z Jonathan.Wage $
  */
 class sfDoctrineCli extends Doctrine_Cli
 {
-  protected $symfonyDispatcher,
-            $symfonyFormatter;
+  protected $dispatcher,
+            $formatter;
 
   /**
-   * Set the symfony dispatcher of the cli instance
+   * Set the dispatcher of the cli instance
    *
    * @param object $dispatcher
    * @return void
    */
-  public function setSymfonyDispatcher($dispatcher)
+  public function setDispatcher($dispatcher)
   {
-    $this->symfonyDispatcher = $dispatcher;
+    $this->dispatcher = $dispatcher;
   }
 
   /**
-   * Set the symfony formatter to use for the cli
+   * Set the formatter to use for the cli
    *
    * @param object $formatter
    * @return void
    */
-  public function setSymfonyFormatter($formatter)
+  public function setFormatter($formatter)
   {
-    $this->symfonyFormatter = $formatter;
+    $this->formatter = $formatter;
   }
 
   /**
@@ -54,7 +54,7 @@ class sfDoctrineCli extends Doctrine_Cli
    */
   public function notify($notification = null, $style = 'HEADER')
   {
-    $this->symfonyDispatcher->notify(new sfEvent($this, 'command.log', array($this->symfonyFormatter->formatSection('doctrine', $notification))));
+    $this->dispatcher->notify(new sfEvent($this, 'command.log', array($this->formatter->formatSection('doctrine', $notification))));
   }
 
   /**
@@ -64,8 +64,8 @@ class sfDoctrineCli extends Doctrine_Cli
    * @return void
    * @throws sfException
    */
-  public function notifyException(Exception $exception)
+  public function notifyException($exception)
   {
-    throw $exception;
+    throw new sfException($exception->getMessage());
   }
 }

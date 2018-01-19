@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage command
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfCommandOption.class.php 21908 2009-09-11 12:06:21Z fabien $
+ * @version    SVN: $Id: sfCommandOption.class.php 17858 2009-05-01 21:22:50Z FabianLange $
  */
 class sfCommandOption
 {
@@ -52,7 +52,7 @@ class sfCommandOption
       $shortcut = null;
     }
 
-    if (null !== $shortcut)
+    if (!is_null($shortcut))
     {
       if ('-' == $shortcut[0])
       {
@@ -60,7 +60,7 @@ class sfCommandOption
       }
     }
 
-    if (null === $mode)
+    if (is_null($mode))
     {
       $mode = self::PARAMETER_NONE;
     }
@@ -144,14 +144,14 @@ class sfCommandOption
    */
   public function setDefault($default = null)
   {
-    if (self::PARAMETER_NONE === (self::PARAMETER_NONE & $this->mode) && null !== $default)
+    if (self::PARAMETER_NONE === (self::PARAMETER_NONE & $this->mode) && !is_null($default))
     {
       throw new sfCommandException('Cannot set a default value when using sfCommandOption::PARAMETER_NONE mode.');
     }
 
     if ($this->isArray())
     {
-      if (null === $default)
+      if (is_null($default))
       {
         $default = array();
       }

@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage validator
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfValidatorPropelChoice.class.php 28632 2010-03-20 14:13:37Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfValidatorPropelChoice.class.php 16976 2009-04-04 12:47:44Z fabien $
  */
 class sfValidatorPropelChoice extends sfValidatorBase
 {
@@ -29,8 +29,6 @@ class sfValidatorPropelChoice extends sfValidatorBase
    *                must be in field name format
    *  * connection: The Propel connection to use (null by default)
    *  * multiple:   true if the select tag must allow multiple selections
-   *  * min:        The minimum number of values that need to be selected (this option is only active if multiple is true)
-   *  * max:        The maximum number of values that need to be selected (this option is only active if multiple is true)
    *
    * @see sfValidatorBase
    */
@@ -41,11 +39,6 @@ class sfValidatorPropelChoice extends sfValidatorBase
     $this->addOption('column', null);
     $this->addOption('connection', null);
     $this->addOption('multiple', false);
-    $this->addOption('min');
-    $this->addOption('max');
-
-    $this->addMessage('min', 'At least %min% values must be selected (%count% values selected).');
-    $this->addMessage('max', 'At most %max% values must be selected (%count% values selected).');
   }
 
   /**
@@ -53,7 +46,7 @@ class sfValidatorPropelChoice extends sfValidatorBase
    */
   protected function doClean($value)
   {
-    $criteria = null === $this->getOption('criteria') ? new Criteria() : clone $this->getOption('criteria');
+    $criteria = is_null($this->getOption('criteria')) ? new Criteria() : clone $this->getOption('criteria');
 
     if ($this->getOption('multiple'))
     {
@@ -62,23 +55,11 @@ class sfValidatorPropelChoice extends sfValidatorBase
         $value = array($value);
       }
 
-      $count = count($value);
-
-      if ($this->hasOption('min') && $count < $this->getOption('min'))
-      {
-        throw new sfValidatorError($this, 'min', array('count' => $count, 'min' => $this->getOption('min')));
-      }
-
-      if ($this->hasOption('max') && $count > $this->getOption('max'))
-      {
-        throw new sfValidatorError($this, 'max', array('count' => $count, 'max' => $this->getOption('max')));
-      }
-
       $criteria->addAnd($this->getColumn(), $value, Criteria::IN);
 
-      $dbcount = call_user_func(array(constant($this->getOption('model').'::PEER'), 'doCount'), $criteria, false, $this->getOption('connection'));
+      $objects = call_user_func(array(constant($this->getOption('model').'::PEER'), 'doSelect'), $criteria, $this->getOption('connection'));
 
-      if ($dbcount != $count)
+      if (count($objects) != count($value))
       {
         throw new sfValidatorError($this, 'invalid', array('value' => $value));
       }
@@ -87,9 +68,9 @@ class sfValidatorPropelChoice extends sfValidatorBase
     {
       $criteria->addAnd($this->getColumn(), $value);
 
-      $dbcount = call_user_func(array(constant($this->getOption('model').'::PEER'), 'doCount'), $criteria, false, $this->getOption('connection'));
+      $object = call_user_func(array(constant($this->getOption('model').'::PEER'), 'doSelectOne'), $criteria, $this->getOption('connection'));
 
-      if (0 === $dbcount)
+      if (is_null($object))
       {
         throw new sfValidatorError($this, 'invalid', array('value' => $value));
       }

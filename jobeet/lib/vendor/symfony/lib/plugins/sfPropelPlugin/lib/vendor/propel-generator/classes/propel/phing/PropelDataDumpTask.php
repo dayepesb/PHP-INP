@@ -1,7 +1,7 @@
 <?php
 
 /*
- *  $Id: PropelDataDumpTask.php 1262 2009-10-26 20:54:39Z francois $
+ *  $Id: PropelDataDumpTask.php 989 2008-03-11 14:29:30Z heltem $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -35,7 +35,7 @@
  * @author     Fedor Karpelevitch <fedor.karpelevitch@home.com> (Torque)
  * @author     Jason van Zyl <jvanzyl@zenplex.com> (Torque)
  * @author     Daniel Rall <dlr@finemaltcoding.com> (Torque)
- * @version    $Revision: 1262 $
+ * @version    $Revision: 989 $
  * @package    propel.phing
  */
 class PropelDataDumpTask extends AbstractPropelDataModelTask {

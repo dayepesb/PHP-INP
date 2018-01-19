@@ -16,13 +16,14 @@
  * @package    symfony
  * @subpackage validator
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfValidatorBase.class.php 32653 2011-06-15 18:32:02Z fabien $
+ * @version    SVN: $Id: sfValidatorBase.class.php 21875 2009-09-11 05:54:39Z fabien $
  */
 abstract class sfValidatorBase
 {
   protected static
-    $charset = 'UTF-8',
-    $globalDefaultMessages = array('invalid' => 'Invalid.', 'required' => 'Required.');
+    $charset         = 'UTF-8',
+    $invalidMessage  = 'Invalid.',
+    $requiredMessage = 'Required.';
 
   protected
     $requiredOptions = array(),
@@ -51,7 +52,7 @@ abstract class sfValidatorBase
   public function __construct($options = array(), $messages = array())
   {
     $this->options  = array_merge(array('required' => true, 'trim' => false, 'empty_value' => null), $this->options);
-    $this->messages = array_merge(array('required' => self::$globalDefaultMessages['required'], 'invalid' => self::$globalDefaultMessages['invalid']), $this->messages);
+    $this->messages = array_merge(array('required' => self::$requiredMessage, 'invalid' => self::$invalidMessage), $this->messages);
 
     $this->configure($options, $messages);
 
@@ -119,14 +120,10 @@ abstract class sfValidatorBase
    *
    * @param string $name   The error code
    * @param string $value  The error message
-   *
-   * @return sfValidatorBase The current validator instance
    */
   public function addMessage($name, $value)
   {
-    $this->messages[$name] = isset(self::$globalDefaultMessages[$name]) ? self::$globalDefaultMessages[$name] : $value;
-
-    return $this;
+    $this->messages[$name] = $value;
   }
 
   /**
@@ -134,8 +131,6 @@ abstract class sfValidatorBase
    *
    * @param string $name   The error code
    * @param string $value  The error message
-   *
-   * @return sfValidatorBase The current validator instance
    */
   public function setMessage($name, $value)
   {
@@ -145,8 +140,6 @@ abstract class sfValidatorBase
     }
 
     $this->messages[$name] = $value;
-
-    return $this;
   }
 
   /**
@@ -163,14 +156,10 @@ abstract class sfValidatorBase
    * Changes all error messages.
    *
    * @param array $values  An array of error messages
-   *
-   * @return sfValidatorBase The current validator instance
    */
   public function setMessages($values)
   {
-    $this->messages = array_merge(array('required' => self::$globalDefaultMessages['required'], 'invalid' => self::$globalDefaultMessages['invalid']), $values);
-
-    return $this;
+    $this->messages = $values;
   }
 
   /**
@@ -190,14 +179,10 @@ abstract class sfValidatorBase
    *
    * @param string $name   The option name
    * @param mixed  $value  The default value
-   *
-   * @return sfValidatorBase The current validator instance
    */
   public function addOption($name, $value = null)
   {
     $this->options[$name] = $value;
-
-    return $this;
   }
 
   /**
@@ -205,8 +190,6 @@ abstract class sfValidatorBase
    *
    * @param string $name   The option name
    * @param mixed  $value  The value
-   *
-   * @return sfValidatorBase The current validator instance
    */
   public function setOption($name, $value)
   {
@@ -216,8 +199,6 @@ abstract class sfValidatorBase
     }
 
     $this->options[$name] = $value;
-
-    return $this;
   }
 
   /**
@@ -246,28 +227,20 @@ abstract class sfValidatorBase
    * Changes all options.
    *
    * @param array $values  An array of options
-   *
-   * @return sfValidatorBase The current validator instance
    */
   public function setOptions($values)
   {
-    $this->options = array_merge(array('required' => true, 'trim' => false, 'empty_value' => null), $values);
-
-    return $this;
+    $this->options = $values;
   }
 
   /**
    * Adds a required option.
    *
    * @param string $name  The option name
-   *
-   * @return sfValidatorBase The current validator instance
    */
   public function addRequiredOption($name)
   {
     $this->requiredOptions[] = $name;
-
-    return $this;
   }
 
   /**
@@ -281,14 +254,23 @@ abstract class sfValidatorBase
   }
 
   /**
-   * Sets the default message for a given name.
+   * Sets the default invalid message
    *
-   * @param string $name    The name of the message
-   * @param string $message The default message string
+   * @param string $message
    */
-  static public function setDefaultMessage($name, $message)
+  static public function setInvalidMessage($message)
   {
-    self::$globalDefaultMessages[$name] = $message;
+    self::$invalidMessage = $message;
+  }
+
+  /**
+   * Sets the default required message
+   *
+   * @param string $message
+   */
+  static public function setRequiredMessage($message)
+  {
+    self::$requiredMessage = $message;
   }
 
   /**

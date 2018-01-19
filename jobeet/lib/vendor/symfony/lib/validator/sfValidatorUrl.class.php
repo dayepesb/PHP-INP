@@ -14,26 +14,11 @@
  * @package    symfony
  * @subpackage validator
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfValidatorUrl.class.php 22149 2009-09-18 14:09:53Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfValidatorUrl.class.php 9048 2008-05-19 09:11:23Z FabianLange $
  */
 class sfValidatorUrl extends sfValidatorRegex
 {
-  const REGEX_URL_FORMAT = '~^
-      (%s)://                                 # protocol
-      (
-        ([a-z0-9-]+\.)+[a-z]{2,6}             # a domain name
-          |                                   #  or
-        \d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}    # a IP address
-      )
-      (:[0-9]+)?                              # a port (optional)
-      (/?|/\S+)                               # a /, nothing or a / with something
-    $~ix';
-
   /**
-   * Available options:
-   *
-   *  * protocols: An array of acceptable URL protocols (http, https, ftp and ftps by default)
-   *
    * @param array $options   An array of options
    * @param array $messages  An array of error messages
    *
@@ -43,17 +28,15 @@ class sfValidatorUrl extends sfValidatorRegex
   {
     parent::configure($options, $messages);
 
-    $this->addOption('protocols', array('http', 'https', 'ftp', 'ftps'));
-    $this->setOption('pattern', new sfCallable(array($this, 'generateRegex')));
-  }
-
-  /**
-   * Generates the current validator's regular expression.
-   *
-   * @return string
-   */
-  public function generateRegex()
-  {
-    return sprintf(self::REGEX_URL_FORMAT, implode('|', $this->getOption('protocols')));
+    $this->setOption('pattern', '~^
+      (https?|ftps?)://                       # http or ftp (+SSL)
+      (
+        ([a-z0-9-]+\.)+[a-z]{2,6}             # a domain name
+          |                                   #  or
+        \d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}    # a IP address
+      )
+      (:[0-9]+)?                              # a port (optional)
+      (/?|/\S+)                               # a /, nothing or a / with something
+    $~ix');
   }
 }

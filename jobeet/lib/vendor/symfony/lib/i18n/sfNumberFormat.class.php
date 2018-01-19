@@ -13,7 +13,7 @@
  * {@link http://prado.sourceforge.net/}
  *
  * @author     Wei Zhuo <weizhuo[at]gmail[dot]com>
- * @version    $Id: sfNumberFormat.class.php 32678 2011-06-29 16:43:32Z fabien $
+ * @version    $Id: sfNumberFormat.class.php 26681 2010-01-15 15:28:37Z fabien $
  * @package    symfony
  * @subpackage i18n
  */
@@ -80,13 +80,13 @@ class sfNumberFormat
    */
   function __construct($formatInfo = null)
   {
-    if (null === $formatInfo)
+    if (is_null($formatInfo))
     {
       $this->formatInfo = sfNumberFormatInfo::getInvariantInfo();
     }
     else if ($formatInfo instanceof sfCultureInfo)
     {
-      $this->formatInfo = $formatInfo->getNumberFormat();
+      $this->formatInfo = $formatInfo->sfNumberFormat;
     }
     else if ($formatInfo instanceof sfNumberFormatInfo)
     {
@@ -141,13 +141,17 @@ class sfNumberFormat
     {
       $suffix = $this->formatInfo->NegativePattern;
     }
+    else
+    {
+      $suffix = array('', '');
+    }
 
     // append and prepend suffix
     $result = $suffix[0].$result.$suffix[1];
 
     // replace currency sign
     $symbol = @$this->formatInfo->getCurrencySymbol($currency);
-    if (null === $symbol)
+    if (is_null($symbol))
     {
       $symbol = $currency;
     }
@@ -329,14 +333,8 @@ class sfNumberFormat
 
     list($significand, $exp) = explode('E', $string);
     list(, $decimal) = explode('.', $significand);
-    if ('-' === $exp[0]) {
-        $exp = str_replace('-', '', $exp);
+    $exp = str_replace('+', '', $exp) - strlen($decimal);
 
-        return '0.'.str_repeat('0', $exp).str_replace('.', '', $significand);
-    } else {
-        $exp = str_replace('+', '', $exp) - strlen($decimal);
-
-        return str_replace('.', '', $significand).str_repeat('0', $exp);
-    }
+    return str_replace('.', '', $significand).str_repeat('0', $exp);
   }
 }

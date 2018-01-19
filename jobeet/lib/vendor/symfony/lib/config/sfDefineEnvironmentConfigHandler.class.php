@@ -13,7 +13,7 @@
  * @package    symfony
  * @subpackage config
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfDefineEnvironmentConfigHandler.class.php 23810 2009-11-12 11:07:44Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfDefineEnvironmentConfigHandler.class.php 17858 2009-05-01 21:22:50Z FabianLange $
  */
 class sfDefineEnvironmentConfigHandler extends sfYamlConfigHandler
 {
@@ -32,13 +32,10 @@ class sfDefineEnvironmentConfigHandler extends sfYamlConfigHandler
     // get our prefix
     $prefix = strtolower($this->getParameterHolder()->get('prefix', ''));
 
-    // add module prefix if needed
+    // add dynamic prefix if needed
     if ($this->getParameterHolder()->get('module', false))
     {
-      $wildcardValues = $this->getParameterHolder()->get('wildcardValues');
-      // either the module name is in wildcard values, or it needs to be inserted on runtime
-      $moduleName = $wildcardValues ? strtolower($wildcardValues[0]) : "'.strtolower(\$moduleName).'";
-      $prefix .= $moduleName."_";
+      $prefix .= "'.strtolower(\$moduleName).'_";
     }
 
     // parse the yaml

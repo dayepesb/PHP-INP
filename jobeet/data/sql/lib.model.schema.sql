@@ -52,7 +52,6 @@ CREATE TABLE `jobeet_job`
 	CONSTRAINT `jobeet_job_FK_1`
 		FOREIGN KEY (`category_id`)
 		REFERENCES `jobeet_category` (`id`)
-		ON DELETE CASCADE
 )Engine=InnoDB;
 
 #-----------------------------------------------------------------------------

@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage form
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfFormFilterPropel.class.php 27748 2010-02-08 18:18:44Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfFormFilterPropel.class.php 14499 2009-01-06 18:15:39Z Jonathan.Wage $
  */
 abstract class sfFormFilterPropel extends sfFormFilter
 {
@@ -102,33 +102,14 @@ abstract class sfFormFilterPropel extends sfFormFilter
    */
   public function buildCriteria(array $values)
   {
-    return $this->doBuildCriteria($this->processValues($values));
-  }
+    $values = $this->processValues($values);
 
-  /**
-   * Builds a Propel Criteria with processed values.
-   *
-   * Overload this method instead of {@link buildCriteria()} to avoid running
-   * {@link processValues()} multiple times.
-   *
-   * @param  array $values
-   *
-   * @return Criteria
-   */
-  protected function doBuildCriteria(array $values)
-  {
     $criteria = new Criteria();
+
     $peer = constant($this->getModelName().'::PEER');
-
-    $fields = $this->getFields();
-
-    // add those fields that are not represented in getFields() with a null type
-    $names = array_merge($fields, array_diff(array_keys($this->validatorSchema->getFields()), array_keys($fields)));
-    $fields = array_merge($fields, array_combine($names, array_fill(0, count($names), null)));
-
-    foreach ($fields as $field => $type)
+    foreach ($this->getFields() as $field => $type)
     {
-      if (!isset($values[$field]) || null === $values[$field] || '' === $values[$field])
+      if (!isset($values[$field]) || is_null($values[$field]) || '' === $values[$field])
       {
         continue;
       }
@@ -213,7 +194,7 @@ abstract class sfFormFilterPropel extends sfFormFilter
       $criterion->addOr($criteria->getNewCriterion($colname, null, Criteria::ISNULL));
       $criteria->add($criterion);
     }
-    else if (is_array($values) && isset($values['text']) && '' !== $values['text'])
+    else if (is_array($values) && isset($values['text']) && '' != $values['text'])
     {
       $criteria->add($colname, $values['text']);
     }
@@ -235,21 +216,21 @@ abstract class sfFormFilterPropel extends sfFormFilter
     else
     {
       $criterion = null;
-      if (null !== $values['from'] && null !== $values['to'])
+      if (!is_null($values['from']) && !is_null($values['to']))
       {
         $criterion = $criteria->getNewCriterion($colname, $values['from'], Criteria::GREATER_EQUAL);
         $criterion->addAnd($criteria->getNewCriterion($colname, $values['to'], Criteria::LESS_EQUAL));
       }
-      else if (null !== $values['from'])
+      else if (!is_null($values['from']))
       {
         $criterion = $criteria->getNewCriterion($colname, $values['from'], Criteria::GREATER_EQUAL);
       }
-      else if (null !== $values['to'])
+      else if (!is_null($values['to']))
       {
         $criterion = $criteria->getNewCriterion($colname, $values['to'], Criteria::LESS_EQUAL);
       }
 
-      if (null !== $criterion)
+      if (!is_null($criterion))
       {
         $criteria->add($criterion);
       }
@@ -263,6 +244,6 @@ abstract class sfFormFilterPropel extends sfFormFilter
 
   protected function camelize($text)
   {
-    return sfInflector::camelize($text);
+    return sfToolkit::pregtr($text, array('#/(.?)#e' => "'::'.strtoupper('\\1')", '/(^|_|-)+(.)/e' => "strtoupper('\\2')"));
   }
 }

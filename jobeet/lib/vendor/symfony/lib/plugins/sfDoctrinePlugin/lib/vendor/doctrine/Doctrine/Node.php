@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Node.php 7490 2010-03-29 19:53:27Z jwage $
+ *  $Id: Node.php 5801 2009-06-02 17:30:27Z piccoloprincipe $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -16,7 +16,7 @@
  *
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information, see
- * <http://www.doctrine-project.org>.
+ * <http://www.phpdoctrine.org>.
  */
 
 /**
@@ -25,9 +25,9 @@
  * @package     Doctrine
  * @subpackage  Node
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
- * @link        www.doctrine-project.org
+ * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 7490 $
+ * @version     $Revision: 5801 $
  * @author      Joe Simms <joe.simms@websites4.com>
  */
 class Doctrine_Node implements IteratorAggregate
@@ -101,16 +101,12 @@ class Doctrine_Node implements IteratorAggregate
     }
 
     /**
-     * Factory method for creating a Node.
-     *
-     * This is a factory method that returns node instance based upon chosen
-     * implementation.
+     * factory method to return node instance based upon chosen implementation
      *
      * @param object $record                    instance of Doctrine_Record
-     * @param string $implName                  implementation (NestedSet, AdjacencyList, MaterializedPath)
+     * @param string $impName                   implementation (NestedSet, AdjacencyList, MaterializedPath)
      * @param array $options                    options
-     * @return Doctrine_Node
-     * @throws Doctrine_Node_Exception          if $implName is not a valid class
+     * @return object $options                  instance of Doctrine_Node
      */
     public static function factory(Doctrine_Record $record, $implName, $options = array())
     {
@@ -136,7 +132,7 @@ class Doctrine_Node implements IteratorAggregate
     /**
      * getter for record attribute
      *
-     * @return Doctrine_Record
+     * @return object                           instance of Doctrine_Record
      */
     public function getRecord()
     {

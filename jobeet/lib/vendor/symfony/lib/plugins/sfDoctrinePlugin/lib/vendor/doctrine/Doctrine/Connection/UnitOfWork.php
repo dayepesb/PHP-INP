@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: UnitOfWork.php 7684 2010-08-24 16:34:16Z jwage $
+ *  $Id: UnitOfWork.php 6124 2009-07-20 17:47:01Z jwage $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -16,7 +16,7 @@
  *
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information, see
- * <http://www.doctrine-project.org>.
+ * <http://www.phpdoctrine.org>.
  */
 
 /**
@@ -31,9 +31,9 @@
  * @package     Doctrine
  * @subpackage  Connection
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
- * @link        www.doctrine-project.org
+ * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 7684 $
+ * @version     $Revision: 6124 $
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  * @author      Roman Borschel <roman@code-factory.org>
  */
@@ -46,12 +46,11 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
      * @param Doctrine_Record $record
      * @return void
      */
-    public function saveGraph(Doctrine_Record $record, $replace = false)
+    public function saveGraph(Doctrine_Record $record)
     {
         $record->assignInheritanceValues();
 
         $conn = $this->getConnection();
-        $conn->connect();
 
         $state = $record->state();
         if ($state === Doctrine_Record::STATE_LOCKED || $state === Doctrine_Record::STATE_TLOCKED) {
@@ -62,86 +61,65 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
 
         try {
             $conn->beginInternalTransaction();
+            $this->saveRelatedLocalKeys($record);
+
             $record->state($state);
 
-            $event = $record->invokeSaveHooks('pre', 'save');
+            $event = new Doctrine_Event($record, Doctrine_Event::RECORD_SAVE);
+            $record->preSave($event);
+            $record->getTable()->getRecordListener()->preSave($event);
             $state = $record->state();
 
             $isValid = true;
 
             if ( ! $event->skipOperation) {
-                $this->saveRelatedLocalKeys($record);
-
                 switch ($state) {
                     case Doctrine_Record::STATE_TDIRTY:
                     case Doctrine_Record::STATE_TCLEAN:
-                        if ($replace) {
-                            $isValid = $this->replace($record);
-                        } else {
-                            $isValid = $this->insert($record);
-                        }
+                        $isValid = $this->insert($record);
                         break;
                     case Doctrine_Record::STATE_DIRTY:
                     case Doctrine_Record::STATE_PROXY:
-                        if ($replace) {
-                            $isValid = $this->replace($record);
-                        } else {
-                            $isValid = $this->update($record);
-                        }
+                        $isValid = $this->update($record);
                         break;
                     case Doctrine_Record::STATE_CLEAN:
                         // do nothing
                         break;
                 }
+            }
 
-                $aliasesUnlinkInDb = array();
-
-                if ($isValid) {
-                    // NOTE: what about referential integrity issues?
-                    foreach ($record->getPendingDeletes() as $pendingDelete) {
-                        $pendingDelete->delete();
-                    }
-                
-                    foreach ($record->getPendingUnlinks() as $alias => $ids) {
-                        if ($ids === false) {
-                            $record->unlinkInDb($alias, array());
-                            $aliasesUnlinkInDb[] = $alias;
-                        } else if ($ids) {
-                            $record->unlinkInDb($alias, array_keys($ids));
-                            $aliasesUnlinkInDb[] = $alias;
-                        }
-                    }
-                    $record->resetPendingUnlinks();
-
-                    $record->invokeSaveHooks('post', 'save', $event);
-                } else {
-                    $conn->transaction->addInvalid($record);
+            if ($isValid) {
+                // NOTE: what about referential integrity issues?
+                foreach ($record->getPendingDeletes() as $pendingDelete) {
+                    $pendingDelete->delete();
                 }
 
-                $state = $record->state();
+                $record->postSave($event);
+                $record->getTable()->getRecordListener()->postSave($event);
+            } else {
+                $conn->transaction->addInvalid($record);
+            }
 
-                $record->state($record->exists() ? Doctrine_Record::STATE_LOCKED : Doctrine_Record::STATE_TLOCKED);
+            $state = $record->state();
 
-                if ($isValid) {
-                    $saveLater = $this->saveRelatedForeignKeys($record);
-                    foreach ($saveLater as $fk) {
-                        $alias = $fk->getAlias();
+            $record->state($record->exists() ? Doctrine_Record::STATE_LOCKED : Doctrine_Record::STATE_TLOCKED);
 
-                        if ($record->hasReference($alias)) {
-                            $obj = $record->$alias;
+            $saveLater = $this->saveRelatedForeignKeys($record);
+            foreach ($saveLater as $fk) {
+                $alias = $fk->getAlias();
 
-                            // check that the related object is not an instance of Doctrine_Null
-                            if ($obj && ! ($obj instanceof Doctrine_Null)) {
-                                $processDiff = !in_array($alias, $aliasesUnlinkInDb);
-                                $obj->save($conn, $processDiff);
-                            }
-                        }
+                if ($record->hasReference($alias)) {
+                    $obj = $record->$alias;
+
+                    // check that the related object is not an instance of Doctrine_Null
+                    if ($obj && ! ($obj instanceof Doctrine_Null)) {
+                        $obj->save($conn);
                     }
-
-                    // save the MANY-TO-MANY associations
-                    $this->saveAssociations($record);
                 }
             }
+
+            // save the MANY-TO-MANY associations
+            $this->saveAssociations($record);
 
             $record->state($state);
 
@@ -153,9 +131,42 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
             throw $e;
         }
 
-        $record->clearInvokedSaveHooks();
-
         return true;
+    }
+
+    /**
+     * saves the given record
+     *
+     * @param Doctrine_Record $record
+     * @return void
+     */
+    public function save(Doctrine_Record $record)
+    {
+        $event = new Doctrine_Event($record, Doctrine_Event::RECORD_SAVE);
+
+        $record->preSave($event);
+
+        $record->getTable()->getRecordListener()->preSave($event);
+
+        if ( ! $event->skipOperation) {
+            switch ($record->state()) {
+                case Doctrine_Record::STATE_TDIRTY:
+                case Doctrine_Record::STATE_TCLEAN:
+                    $this->insert($record);
+                    break;
+                case Doctrine_Record::STATE_DIRTY:
+                case Doctrine_Record::STATE_PROXY:
+                    $this->update($record);
+                    break;
+                case Doctrine_Record::STATE_CLEAN:
+                    // do nothing
+                    break;
+            }
+        }
+
+        $record->getTable()->getRecordListener()->postSave($event);
+
+        $record->postSave($event);
     }
 
     /**
@@ -386,12 +397,9 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
      */
     public function saveRelatedLocalKeys(Doctrine_Record $record)
     {
-        $state = $record->state();
-        $record->state($record->exists() ? Doctrine_Record::STATE_LOCKED : Doctrine_Record::STATE_TLOCKED);
-
         foreach ($record->getReferences() as $k => $v) {
             $rel = $record->getTable()->getRelation($k);
-            
+
             $local = $rel->getLocal();
             $foreign = $rel->getForeign();
 
@@ -406,9 +414,7 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
                     $id = array_values($obj->identifier());
 
                     if ( ! empty($id)) {
-                        foreach ((array) $rel->getLocal() as $k => $columnName) {
-                            $field = $record->getTable()->getFieldName($columnName);
-                            
+                        foreach ((array) $rel->getLocal() as $k => $field) {
                             if (isset($id[$k]) && $id[$k] && $record->getTable()->hasField($field)) {
                                 $record->set($field, $id[$k]);
                             }
@@ -417,7 +423,6 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
                 }
             }
         }
-        $record->state($state);
     }
 
     /**
@@ -441,15 +446,13 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
             $rel = $record->getTable()->getRelation($k);
 
             if ($rel instanceof Doctrine_Relation_Association) {
-                if ($this->conn->getAttribute(Doctrine_Core::ATTR_CASCADE_SAVES) || $v->isModified()) {
-                    $v->save($this->conn, false);
-                }
+                $v->save($this->conn, false);
 
                 $assocTable = $rel->getAssociationTable();
                 foreach ($v->getDeleteDiff() as $r) {
                     $query = 'DELETE FROM ' . $assocTable->getTableName()
-                           . ' WHERE ' . $rel->getForeignRefColumnName() . ' = ?'
-                           . ' AND ' . $rel->getLocalRefColumnName() . ' = ?';
+                           . ' WHERE ' . $rel->getForeign() . ' = ?'
+                           . ' AND ' . $rel->getLocal() . ' = ?';
 
                     $this->conn->execute($query, array($r->getIncremented(), $record->getIncremented()));
                 }
@@ -519,10 +522,12 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
      */
     public function update(Doctrine_Record $record)
     {
-        $event = $record->invokeSaveHooks('pre', 'update');;
+        $event = new Doctrine_Event($record, Doctrine_Event::RECORD_UPDATE);
+        $record->preUpdate($event);
+        $table = $record->getTable();
+        $table->getRecordListener()->preUpdate($event);
 
-        if ($record->isValid(false, false)) {
-            $table = $record->getTable();
+        if ($record->isValid()) {
             if ( ! $event->skipOperation) {
                 $identifier = $record->identifier();
                 if ($table->getOption('joinedParents')) {
@@ -536,7 +541,9 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
                 $record->assignIdentifier(true);
             }
 
-            $record->invokeSaveHooks('post', 'update', $event);
+            $table->getRecordListener()->postUpdate($event);
+
+            $record->postUpdate($event);
 
             return true;
         }
@@ -545,23 +552,20 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
     }
 
     /**
-     * Inserts a record into database.
+     * inserts a record into database
      *
-     * This method inserts a transient record in the database, and adds it
-     * to the identity map of its correspondent table. It proxies to @see 
-     * processSingleInsert(), trigger insert hooks and validation of data
-     * if required.
-     *
-     * @param Doctrine_Record $record   
-     * @return boolean                  false if record is not valid
+     * @param Doctrine_Record $record   record to be inserted
+     * @return boolean
      */
     public function insert(Doctrine_Record $record)
     {
-        $event = $record->invokeSaveHooks('pre', 'insert');
+        // listen the onPreInsert event
+        $event = new Doctrine_Event($record, Doctrine_Event::RECORD_INSERT);
+        $record->preInsert($event);
+        $table = $record->getTable();
+        $table->getRecordListener()->preInsert($event);
 
-        if ($record->isValid(false, false)) {
-            $table = $record->getTable();
-
+        if ($record->isValid()) {
             if ( ! $event->skipOperation) {
                 if ($table->getOption('joinedParents')) {
                     // just for bc!
@@ -573,7 +577,8 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
             }
 
             $table->addRecord($record);
-            $record->invokeSaveHooks('post', 'insert', $event);
+            $table->getRecordListener()->postInsert($event);
+            $record->postInsert($event);
 
             return true;
         }
@@ -582,54 +587,7 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
     }
 
     /**
-     * Replaces a record into database.
-     *
-     * @param Doctrine_Record $record   
-     * @return boolean                  false if record is not valid
-     */
-    public function replace(Doctrine_Record $record)
-    {
-        if ($record->exists()) {
-            return $this->update($record);
-        } else {
-            if ($record->isValid()) {
-                $this->_assignSequence($record);
-
-                $saveEvent = $record->invokeSaveHooks('pre', 'save');
-                $insertEvent = $record->invokeSaveHooks('pre', 'insert');
-
-                $table = $record->getTable();
-                $identifier = (array) $table->getIdentifier();
-                $data = $record->getPrepared();       
-
-                foreach ($data as $key  => $value) {
-                    if ($value instanceof Doctrine_Expression) {
-                        $data[$key] = $value->getSql();
-                    }
-                }
-
-                $result = $this->conn->replace($table, $data, $identifier);
-
-                $record->invokeSaveHooks('post', 'insert', $insertEvent);
-                $record->invokeSaveHooks('post', 'save', $saveEvent);
-
-                $this->_assignIdentifier($record);
-
-                return true;
-            } else {
-                return false;
-            }
-        }
-    }
-
-    /**
-     * Inserts a transient record in its table.
-     *
-     * This method inserts the data of a single record in its assigned table, 
-     * assigning to it the autoincrement primary key (if any is defined).
-     * 
-     * @param Doctrine_Record $record
-     * @return void
+     * @todo DESCRIBE WHAT THIS METHOD DOES, PLEASE!
      */
     public function processSingleInsert(Doctrine_Record $record)
     {
@@ -643,9 +601,37 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
             }
         }
 
-        $this->_assignSequence($record, $fields);
+        $identifier = (array) $table->getIdentifier();
+
+        $seq = $record->getTable()->sequenceName;
+
+        if ( ! empty($seq)) {
+            $id = $this->conn->sequence->nextId($seq);
+            $seqName = $table->getIdentifier();
+            $fields[$seqName] = $id;
+
+            $record->assignIdentifier($id);
+        }
+
         $this->conn->insert($table, $fields);
-        $this->_assignIdentifier($record);
+
+        if (empty($seq) && count($identifier) == 1 && $identifier[0] == $table->getIdentifier() &&
+            $table->getIdentifierType() != Doctrine::IDENTIFIER_NATURAL) {
+            if (($driver = strtolower($this->conn->getDriverName())) == 'pgsql') {
+                $seq = $table->getTableName() . '_' . $identifier[0];
+            } elseif ($driver == 'oracle') {
+                $seq = $table->getTableName();
+            }
+
+            $id = $this->conn->sequence->lastInsertId($seq);
+
+            if ( ! $id) {
+                throw new Doctrine_Connection_Exception("Couldn't get last insert identifier.");
+            }
+            $record->assignIdentifier($id);
+        } else {
+            $record->assignIdentifier(true);
+        }
     }
 
     /**
@@ -887,10 +873,6 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
                 $dataSet[$component] = array();
             }
 
-            if ( isset($definition['owner']) && ! isset($dataSet[$definition['owner']])) {
-                $dataSet[$definition['owner']] = array();
-            }
-
             $fieldName = $table->getFieldName($columnName);
             if (isset($definition['primary']) && $definition['primary']) {
                 continue;
@@ -908,53 +890,5 @@ class Doctrine_Connection_UnitOfWork extends Doctrine_Connection_Module
         }
 
         return $dataSet;
-    }
-
-    protected function _assignSequence(Doctrine_Record $record, &$fields = null)
-    {
-        $table = $record->getTable();
-        $seq = $table->sequenceName;
-
-        if ( ! empty($seq)) {
-            $id = $this->conn->sequence->nextId($seq);
-            $seqName = $table->getIdentifier();
-            if ($fields) {
-                $fields[$seqName] = $id;
-            }
-
-            $record->assignIdentifier($id);
-
-            return $id;
-        }
-    }
-
-    protected function _assignIdentifier(Doctrine_Record $record)
-    {
-        $table = $record->getTable();
-        $identifier = $table->getIdentifier();
-        $seq = $table->sequenceName;
-
-        if (empty($seq) && !is_array($identifier) &&
-            $table->getIdentifierType() != Doctrine_Core::IDENTIFIER_NATURAL) {
-            $id = false;
-            if ($record->$identifier == null) { 
-                if (($driver = strtolower($this->conn->getDriverName())) == 'pgsql') {
-                    $seq = $table->getTableName() . '_' . $table->getColumnName($identifier);
-                } elseif ($driver == 'oracle' || $driver == 'mssql') {
-                    $seq = $table->getTableName();
-                }
-    
-                $id = $this->conn->sequence->lastInsertId($seq);
-            } else {
-                $id = $record->$identifier;
-            }
-
-            if ( ! $id) {
-                throw new Doctrine_Connection_Exception("Couldn't get last insert identifier.");
-            }
-            $record->assignIdentifier($id);
-        } else {
-            $record->assignIdentifier(true);
-        }
     }
 }

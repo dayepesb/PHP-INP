@@ -18,7 +18,7 @@
  * @subpackage controller
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Sean Kerr <sean@code-box.org>
- * @version    SVN: $Id: sfFrontWebController.class.php 23810 2009-11-12 11:07:44Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfFrontWebController.class.php 11286 2008-09-02 10:27:36Z fabien $
  */
 class sfFrontWebController extends sfWebController
 {

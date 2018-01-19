@@ -1,7 +1,7 @@
 <?php
 
 /*
- *  $Id: AbstractPropelDataModelTask.php 1684 2010-04-16 20:56:45Z francois $
+ *  $Id:    AbstractPropelDataModelTask.php 1032 2008-04-29 15:22:43Z ron $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -438,13 +438,13 @@ abstract class AbstractPropelDataModelTask extends Task {
 						$this->includeExternalSchemas($dom, $srcDir);
 						// normalize the document using normalizer stylesheet
 
-						$xsl = new XsltProcessor();
-						$domxsl = new DOMDocument('1.0','UTF-8');
-						$domDocument = $domxsl->load($this->xslFile->getAbsolutePath());
+                        $xsl = new XsltProcessor();
+                        $domxsl = new DOMDocument('1.0','UTF-8');
+                        $domDocument = $domxsl->load($this->xslFile->getAbsolutePath());
                         if($domDocument === false)
                             throw new BuildException("Error Loading ".$this->xslFile->getAbsolutePath());
 
-						$xsl->importStyleSheet($domxsl);
+                        $xsl->importStyleSheet($domxsl);
 						$transformed = $xsl->transformToDoc($dom);
 						$newXmlFilename = substr($xmlFile->getName(), 0, strrpos($xmlFile->getName(), '.')) . '-transformed.xml';
 
@@ -462,7 +462,7 @@ abstract class AbstractPropelDataModelTask extends Task {
 				if ($this->validate && $this->xsdFile) {
 					$this->log("Validating XML doc (".$xmlFile->getPath().") using schema file " . $this->xsdFile->getPath(), Project::MSG_VERBOSE);
 					if (!$dom->schemaValidate($this->xsdFile->getAbsolutePath())) {
-						throw new EngineException("XML schema file (".$xmlFile->getPath().") does not validate. See warnings above for reasons validation failed (make sure error_reporting is set to show E_WARNING if you don't see any).", $this->getLocation());
+						throw new BuildException("XML schema file (".$xmlFile->getPath().") does not validate.  See warnings above for reasons validation failed (make sure error_reporting is set to show E_WARNING if you don't see any).");		throw new EngineException("XML schema does not validate (using schema file $xsdFile).  See warnings above for reasons validation failed (make sure error_reporting is set to show E_WARNING if you don't see any).", $this->getLocation());
 					}
 				}
 
@@ -513,11 +513,10 @@ abstract class AbstractPropelDataModelTask extends Task {
 	protected function includeExternalSchemas(DomDocument $dom, $srcDir) {
 		$databaseNode = $dom->getElementsByTagName("database")->item(0);
 		$externalSchemaNodes = $dom->getElementsByTagName("external-schema");
-		$fs = FileSystem::getFileSystem();
 		while ($externalSchema = $externalSchemaNodes->item(0)) {
 			$include = $externalSchema->getAttribute("filename");
 			$externalSchema->parentNode->removeChild($externalSchema);
-			if ($fs->prefixLength($include) != 0) {
+			if (strpos($srcDir->getPath(), "/") === 0) {
 				$externalSchemaFile = new PhingFile($include);
 			} else {
 				$externalSchemaFile = new PhingFile($srcDir, $include);

@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage debug
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfDebug.class.php 33309 2012-01-20 13:06:21Z fabien $
+ * @version    SVN: $Id: sfDebug.class.php 17858 2009-05-01 21:22:50Z FabianLange $
  */
 class sfDebug
 {
@@ -44,12 +44,10 @@ class sfDebug
       'extensions' => get_loaded_extensions(),
     );
 
-    natcasesort($values['extensions']); 
-
     // assign extension version
     if ($values['extensions'])
     {
-      foreach($values['extensions'] as $key => $extension)
+      foreach ($values['extensions'] as $key => $extension)
       {
         $values['extensions'][$key] = phpversion($extension) ? sprintf('%s (%s)', $extension, phpversion($extension)) : $extension;
       }
@@ -115,7 +113,6 @@ class sfDebug
     }
 
     return array(
-      'options'         => $request->getOptions(),
       'parameterHolder' => self::flattenParameterHolder($request->getParameterHolder(), true),
       'attributeHolder' => self::flattenParameterHolder($request->getAttributeHolder(), true),
     );
@@ -136,7 +133,6 @@ class sfDebug
     }
 
     return array(
-      'status'      => array('code' => $response->getStatusCode(), 'text' => $response->getStatusText()),
       'options'     => $response->getOptions(),
       'cookies'     => method_exists($response, 'getCookies')     ? $response->getCookies() : array(),
       'httpHeaders' => method_exists($response, 'getHttpHeaders') ? $response->getHttpHeaders() : array(),
@@ -161,22 +157,11 @@ class sfDebug
       return array();
     }
 
-    $data = array(
+    return array(
       'options'         => $user->getOptions(),
       'attributeHolder' => self::flattenParameterHolder($user->getAttributeHolder(), true),
       'culture'         => $user->getCulture(),
     );
-
-    if ($user instanceof sfBasicSecurityUser)
-    {
-      $data = array_merge($data, array(
-          'authenticated'   => $user->isAuthenticated(),
-          'credentials'     => $user->getCredentials(),
-          'lastRequest'     => $user->getLastRequestTime(),
-      ));
-    }
-
-    return $data;
   }
 
   /**
@@ -247,26 +232,5 @@ class sfDebug
     }
 
     return $nvalues;
-  }
-
-  /**
-   * Shortens a file path by replacing symfony directory constants.
-   * 
-   * @param  string $file
-   * 
-   * @return string
-   */
-  static public function shortenFilePath($file)
-  {
-    foreach (array('sf_root_dir', 'sf_symfony_lib_dir') as $key)
-    {
-      if (0 === strpos($file, $value = sfConfig::get($key)))
-      {
-        $file = str_replace($value, strtoupper($key), $file);
-        break;
-      }
-    }
-
-    return $file;
   }
 }

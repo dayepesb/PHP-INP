@@ -16,7 +16,7 @@
  * @subpackage view
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
  * @author     Sean Kerr <sean@code-box.org>
- * @version    SVN: $Id: sfPHPView.class.php 28713 2010-03-23 15:08:22Z fabien $
+ * @version    SVN: $Id: sfPHPView.class.php 24511 2009-11-28 22:57:36Z FabianLange $
  */
 class sfPHPView extends sfView
 {
@@ -42,6 +42,12 @@ class sfPHPView extends sfView
     $coreHelpersLoaded = 1;
 
     $helpers = array_unique(array_merge(array('Helper', 'Url', 'Asset', 'Tag', 'Escaping'), sfConfig::get('sf_standard_helpers')));
+
+    // remove default Form helper if compat_10 is false
+    if (!sfConfig::get('sf_compat_10') && false !== $i = array_search('Form', $helpers))
+    {
+      unset($helpers[$i]);
+    }
 
     $this->context->getConfiguration()->loadHelpers($helpers);
   }
@@ -136,12 +142,6 @@ class sfPHPView extends sfView
     $this->attributeHolder = $this->initializeAttributeHolder(array('sf_content' => new sfOutputEscaperSafe($content)));
     $this->attributeHolder->set('sf_type', 'layout');
 
-    // check to see if the decorator template exists
-    if (!is_readable($this->getDecoratorDirectory().'/'.$this->getDecoratorTemplate()))
-    {
-      throw new sfRenderException(sprintf('The decorator template "%s" does not exist or is unreadable in "%s".', $this->decoratorTemplate, $this->decoratorDirectory));
-    }
-
     // render the decorator template and return the result
     $ret = $this->renderFile($this->getDecoratorDirectory().'/'.$this->getDecoratorTemplate());
 
@@ -161,12 +161,12 @@ class sfPHPView extends sfView
     if (sfConfig::get('sf_cache'))
     {
       $viewCache = $this->context->getViewCacheManager();
-      $uri = $viewCache->getCurrentCacheKey();
+      $uri = $this->context->getRouting()->getCurrentInternalUri();
 
-      if (null !== $uri)
+      if (!is_null($uri))
       {
         list($content, $decoratorTemplate) = $viewCache->getActionCache($uri);
-        if (null !== $content)
+        if (!is_null($content))
         {
           $this->setDecoratorTemplate($decoratorTemplate);
         }
@@ -174,7 +174,7 @@ class sfPHPView extends sfView
     }
 
     // render template if no cache
-    if (null === $content)
+    if (is_null($content))
     {
       // execute pre-render check
       $this->preRenderCheck();
@@ -184,7 +184,7 @@ class sfPHPView extends sfView
       // render template file
       $content = $this->renderFile($this->getDirectory().'/'.$this->getTemplate());
 
-      if (sfConfig::get('sf_cache') && null !== $uri)
+      if (sfConfig::get('sf_cache') && !is_null($uri))
       {
         $content = $viewCache->setActionCache($uri, $content, $this->isDecorator() ? $this->getDecoratorDirectory().'/'.$this->getDecoratorTemplate() : false);
       }

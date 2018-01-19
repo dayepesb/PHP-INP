@@ -18,7 +18,7 @@
  * @package    symfony
  * @subpackage validator
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfValidatorPropelUnique.class.php 27940 2010-02-12 13:31:30Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfValidatorPropelUnique.class.php 13249 2008-11-22 16:10:11Z fabien $
  */
 class sfValidatorPropelUnique extends sfValidatorSchema
 {
@@ -42,7 +42,7 @@ class sfValidatorPropelUnique extends sfValidatorSchema
    *
    *  * model:              The model class (required)
    *  * column:             The unique column name in Propel field name format (required)
-   *                        If the uniqueness is for several columns, you can pass an array of field names
+   *                        If the uniquess is for several columns, you can pass an array of field names
    *  * field               Field name used by the form, other than the column name
    *  * primary_key:        The primary key column name in Propel field name format (optional, will be introspected if not provided)
    *                        You can also pass an array if the table has several primary keys
@@ -77,7 +77,6 @@ class sfValidatorPropelUnique extends sfValidatorSchema
     {
       $this->setOption('column', array($this->getOption('column')));
     }
-    $columns = $this->getOption('column');
 
     if (!is_array($field = $this->getOption('field')))
     {
@@ -86,12 +85,12 @@ class sfValidatorPropelUnique extends sfValidatorSchema
     $fields = $this->getOption('field');
 
     $criteria = new Criteria();
-    foreach ($columns as $i => $column)
+    foreach ($this->getOption('column') as $i => $column)
     {
       $name = isset($fields[$i]) ? $fields[$i] : $column;
       if (!array_key_exists($name, $values))
       {
-        // one of the columns has be removed from the form
+        // one of the column has be removed from the form
         return $values;
       }
 
@@ -103,7 +102,7 @@ class sfValidatorPropelUnique extends sfValidatorSchema
     $object = call_user_func(array(constant($this->getOption('model').'::PEER'), 'doSelectOne'), $criteria, $this->getOption('connection'));
 
     // if no object or if we're updating the object, it's ok
-    if (null === $object || $this->isUpdate($object, $values))
+    if (is_null($object) || $this->isUpdate($object, $values))
     {
       return $values;
     }
@@ -115,7 +114,9 @@ class sfValidatorPropelUnique extends sfValidatorSchema
       throw $error;
     }
 
-    throw new sfValidatorErrorSchema($this, array(isset($fields[0]) ? $fields[0] : $columns[0] => $error));
+    $columns = $this->getOption('column');
+
+    throw new sfValidatorErrorSchema($this, array($columns[0] => $error));
   }
 
   /**
@@ -149,7 +150,7 @@ class sfValidatorPropelUnique extends sfValidatorSchema
    */
   protected function getPrimaryKeys()
   {
-    if (null === $this->getOption('primary_key'))
+    if (is_null($this->getOption('primary_key')))
     {
       $primaryKeys = array();
       $tableMap = call_user_func(array(constant($this->getOption('model').'::PEER'), 'getTableMap'));

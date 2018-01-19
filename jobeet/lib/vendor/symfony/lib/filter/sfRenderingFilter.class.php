@@ -15,7 +15,7 @@
  * @package    symfony
  * @subpackage filter
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfRenderingFilter.class.php 29524 2010-05-19 12:55:30Z fabien $
+ * @version    SVN: $Id: sfRenderingFilter.class.php 11286 2008-09-02 10:27:36Z fabien $
  */
 class sfRenderingFilter extends sfFilter
 {
@@ -46,9 +46,6 @@ class sfRenderingFilter extends sfFilter
     }
 
     // send headers + content
-    if (sfView::RENDER_VAR != $this->context->getController()->getRenderMode())
-    {
-        $response->send();
-    }
+    $response->send();
   }
 }

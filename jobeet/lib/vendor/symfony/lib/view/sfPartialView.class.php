@@ -14,7 +14,7 @@
  * @package    symfony
  * @subpackage view
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfPartialView.class.php 31928 2011-01-29 16:02:51Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfPartialView.class.php 17749 2009-04-29 11:54:22Z fabien $
  */
 class sfPartialView extends sfPHPView
 {
@@ -37,7 +37,7 @@ class sfPartialView extends sfPHPView
 
     if (sfConfig::get('sf_cache'))
     {
-      $this->checkCache = $this->viewCache->isActionCacheable($moduleName, $actionName);
+      $this->checkCache = sfConfig::get('sf_lazy_cache_key') ? $this->viewCache->isActionCacheable($moduleName, $actionName) : true;
     }
 
     return $ret;
@@ -92,25 +92,11 @@ class sfPartialView extends sfPHPView
     {
       return $retval;
     }
-
-    if ($this->checkCache)
+    else if ($this->checkCache)
     {
       $mainResponse = $this->context->getResponse();
-
       $responseClass = get_class($mainResponse);
-      $response = new $responseClass($this->context->getEventDispatcher(), $mainResponse->getOptions());
-
-      // the inner response has access to different properties, depending on whether it is marked as contextual in cache.yml
-      if ($this->viewCache->isContextual($this->viewCache->getPartialUri($this->moduleName, $this->actionName, $this->cacheKey)))
-      {
-        $response->copyProperties($mainResponse);
-      }
-      else
-      {
-        $response->setContentType($mainResponse->getContentType());
-      }
-
-      $this->context->setResponse($response);
+      $this->context->setResponse($response = new $responseClass($this->context->getEventDispatcher(), array_merge($mainResponse->getOptions(), array('content_type' => $mainResponse->getContentType()))));
     }
 
     try

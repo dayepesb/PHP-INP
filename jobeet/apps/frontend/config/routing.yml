@@ -1,12 +1,17 @@
-# You can find more information about this file on the symfony website:
-# http://www.symfony-project.org/reference/1_4/en/10-Routing
-
-# default rules
 category:
   url:      /category/:slug
   class:    sfPropelRoute
   param:    { module: category, action: show }
   options:  { model: JobeetCategory, type: object }
+
+job:
+  class:   sfPropelRouteCollection
+  options:
+    model:          JobeetJob
+    column:         token
+    object_actions: { publish: put, extend: PUT }
+  requirements:
+    token: \w+
 
 job_show_user:
   url:     /job/:company_slug/:location_slug/:id/:position_slug
@@ -20,18 +25,6 @@ job_show_user:
     id: \d+
     sf_method: [GET]
 
-job:
-  class:   sfPropelRouteCollection
-  options: { model: JobeetJob }
-
-# default rules
 homepage:
   url:   /
   param: { module: job, action: index }
-
-#default_index:
-#  url:   /:module
-#  param: { action: index }
-
-#default:
-#  url:   /:module/:action/*

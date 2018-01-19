@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: NodePeer.php 1262 2009-10-26 20:54:39Z francois $
+ *  $Id: NodePeer.php 797 2007-11-09 19:21:21Z heltem $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -23,7 +23,7 @@
  * This is a utility interface for all generated NodePeer classes in the system.
  *
  * @author     Heltem <heltem@o2php.com> (Propel)
- * @version    $Revision: 1262 $
+ * @version    $Revision: 797 $
  * @package    propel.util
  */
 interface NodePeer {

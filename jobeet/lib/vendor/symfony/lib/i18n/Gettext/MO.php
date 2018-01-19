@@ -12,7 +12,7 @@
 // | Copyright (c) 2004 Michael Wallner <mike@iworks.at>                  |
 // +----------------------------------------------------------------------+
 //
-// $Id: MO.php 23810 2009-11-12 11:07:44Z Kris.Wallsmith $
+// $Id: MO.php 9856 2008-06-25 11:33:49Z fabien $
 
 /**
  * File::Gettext::MO

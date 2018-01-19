@@ -1,6 +1,6 @@
 <?php
 /*
- *  $Id: Lib.php 7490 2010-03-29 19:53:27Z jwage $
+ *  $Id: Lib.php 5801 2009-06-02 17:30:27Z piccoloprincipe $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -16,7 +16,7 @@
  *
  * This software consists of voluntary contributions made by many individuals
  * and is licensed under the LGPL. For more information, see
- * <http://www.doctrine-project.org>.
+ * <http://www.phpdoctrine.org>.
  */
 
 /**
@@ -25,22 +25,19 @@
  * @package     Doctrine
  * @subpackage  Lib
  * @license     http://www.opensource.org/licenses/lgpl-license.php LGPL
- * @link        www.doctrine-project.org
+ * @link        www.phpdoctrine.org
  * @since       1.0
- * @version     $Revision: 7490 $
+ * @version     $Revision: 5801 $
  * @author      Konsta Vesterinen <kvesteri@cc.hut.fi>
  */
 class Doctrine_Lib
 {
     /**
-     * Generates a human readable representation of a record's state.
+     * getRecordStateAsString
      *
-     * This method translates a Doctrine_Record state (integer constant) 
-     * in an english string.
+     * @param integer $state the state of record
      * @see Doctrine_Record::STATE_* constants
-     *
-     * @param integer $state    the state of record
-     * @return string           description of given state
+     * @return string string representation of given state
      */
     public static function getRecordStateAsString($state)
     {
@@ -64,10 +61,9 @@ class Doctrine_Lib
     }
 
     /**
-     * Dumps a record.
+     * getRecordAsString
      *
-     * This method returns an html representation of a given
-     * record, containing keys, state and data.
+     * returns a string representation of Doctrine_Record object
      *
      * @param Doctrine_Record $record
      * @return string
@@ -76,24 +72,22 @@ class Doctrine_Lib
     {
         $r[] = '<pre>';
         $r[] = 'Component  : ' . $record->getTable()->getComponentName();
-        $r[] = 'ID         : ' . Doctrine_Core::dump($record->identifier());
+        $r[] = 'ID         : ' . Doctrine::dump($record->identifier());
         $r[] = 'References : ' . count($record->getReferences());
         $r[] = 'State      : ' . Doctrine_Lib::getRecordStateAsString($record->state());
         $r[] = 'OID        : ' . $record->getOID();
-        $r[] = 'data       : ' . Doctrine_Core::dump($record->getData(), false);
+        $r[] = 'data       : ' . Doctrine::dump($record->getData(), false);
         $r[] = '</pre>';
 
         return implode("\n",$r)."<br />";
     }
 
     /**
-     * Generates a human readable representation of a connection's state.
+     * getConnectionStateAsString
      *
-     * This method translates a Doctrine_Connection state (integer constant)
-     * in a english description.
-     * @see Doctrine_Transaction::STATE_* constants
-     * @param integer $state    state of the connection as a string
-     * @return string
+     * returns a given connection state as string
+     *
+     * @param integer $state State of the connection as a string
      */
     public static function getConnectionStateAsString($state)
     {
@@ -111,10 +105,9 @@ class Doctrine_Lib
     }
 
     /**
-     * Generates a string representation of a connection.
+     * getConnectionAsString
      *
-     * This method returns an html dump of a connection, containing state, open
-     * transactions and loaded tables.
+     * returns a string representation of Doctrine_Connection object
      *
      * @param Doctrine_Connection $connection
      * @return string
@@ -126,17 +119,17 @@ class Doctrine_Lib
         $r[] = 'State               : ' . Doctrine_Lib::getConnectionStateAsString($connection->transaction->getState());
         $r[] = 'Open Transactions   : ' . $connection->transaction->getTransactionLevel();
         $r[] = 'Table in memory     : ' . $connection->count();
-        $r[] = 'Driver name         : ' . $connection->getAttribute(Doctrine_Core::ATTR_DRIVER_NAME);
+        $r[] = 'Driver name         : ' . $connection->getAttribute(Doctrine::ATTR_DRIVER_NAME);
         $r[] = "</pre>";
         
         return implode("\n",$r)."<br>";
     }
 
     /**
-     * Generates a string representation of a table.
+     * getTableAsString
      *
-     * This method returns an html dump of a table, containing component name
-     * and table physical name.
+     * returns a string representation of Doctrine_Table object
+     *
      * @param Doctrine_Table $table
      * @return string
      */
@@ -151,14 +144,11 @@ class Doctrine_Lib
     }
 
     /**
-     * Generates a colored sql query. 
-     *
-     * This methods parses a plain text query and generates the html needed
-     * for visual formatting.
+     * formatSql 
      * 
      * @todo: What about creating a config varialbe for the color?
-     * @param string $sql   plain text query
-     * @return string       the formatted sql code
+     * @param mixed $sql 
+     * @return string the formated sql
      */
     public static function formatSql($sql)
     {
@@ -183,10 +173,9 @@ class Doctrine_Lib
     }
 
     /**
-     * Generates a string representation of a collection.
+     * getCollectionAsString
      *
-     * This method returns an html dump of a collection of records, containing 
-     * all data.
+     * returns a string representation of Doctrine_Collection object
      *
      * @param Doctrine_Collection $collection
      * @return string
@@ -195,8 +184,8 @@ class Doctrine_Lib
     {
         $r[] = "<pre>";
         $r[] = get_class($collection);
-        $r[] = 'data : ' . Doctrine_Core::dump($collection->getData(), false);
-        //$r[] = 'snapshot : ' . Doctrine_Core::dump($collection->getSnapshot());
+        $r[] = 'data : ' . Doctrine::dump($collection->getData(), false);
+        //$r[] = 'snapshot : ' . Doctrine::dump($collection->getSnapshot());
         $r[] = "</pre>";
         
         return implode("\n",$r);
@@ -269,15 +258,39 @@ class Doctrine_Lib
     }
 
     /**
-     * Makes the directories for a path recursively.
-     * 
-     * This method creates a given path issuing mkdir commands for all folders
-     * that do not exist yet. Equivalent to 'mkdir -p'.
+     * getValidators
+     *
+     * Get available doctrine validators
+     *
+     * @return array $validators
+     */
+    public static function getValidators()
+    {
+        $validators = array();
+
+        $dir = Doctrine::getPath() . DIRECTORY_SEPARATOR . 'Doctrine' . DIRECTORY_SEPARATOR . 'Validator';
+
+        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir), RecursiveIteratorIterator::LEAVES_ONLY);
+        foreach ($files as $file) {
+            $e = explode('.', $file->getFileName());
+
+            if (end($e) == 'php') {
+                $name = strtolower($e[0]);
+
+                $validators[$name] = $name;
+            }
+        }
+
+        return $validators;
+    }
+
+    /**
+     * makeDirectories
+     *
+     * Makes the directories for a path recursively
      *
      * @param string $path
-     * @param integer $mode     an integer (octal) chmod parameter for the
-     *                          created directories
-     * @return boolean  true if succeeded
+     * @return void
      */
     public static function makeDirectories($path, $mode = 0777)
     {
@@ -293,13 +306,10 @@ class Doctrine_Lib
     }
 
     /**
-     * Removes a non empty directory.
-     *
-     * This method recursively removes a directory and all its descendants.
-     * Equivalent to 'rm -rf'.
+     * removeDirectories
      *
      * @param string $folderPath
-     * @return boolean  success of the operation
+     * @return void
      */
     public static function removeDirectories($folderPath)
     {
@@ -325,16 +335,6 @@ class Doctrine_Lib
         }
     }
 
-    /**
-     * Copy all directory content in another one.
-     * 
-     * This method recursively copies all $source files and subdirs in $dest.
-     * If $source is a file, only it will be copied in $dest.
-     *
-     * @param string $source    a directory path
-     * @param string $dest      a directory path
-     * @return
-     */
     public static function copyDirectory($source, $dest)
     {
         // Simple copy for a file
@@ -368,11 +368,9 @@ class Doctrine_Lib
     }
 
     /**
-     * Checks for a valid class name for Doctrine coding standards.
-     * 
-     * This methods tests if $className is a valid class name for php syntax 
-     * and for Doctrine coding standards. $className must use camel case naming
-     * and underscores for directory separation.
+     * isValidClassName
+     *
+     * checks for valid class name (uses camel case and underscores)
      *
      * @param string $classname
      * @return boolean

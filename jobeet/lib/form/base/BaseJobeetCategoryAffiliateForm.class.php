@@ -3,13 +3,11 @@
 /**
  * JobeetCategoryAffiliate form base class.
  *
- * @method JobeetCategoryAffiliate getObject() Returns the current form's model object
- *
  * @package    jobeet
  * @subpackage form
  * @author     Your name here
  */
-abstract class BaseJobeetCategoryAffiliateForm extends BaseFormPropel
+class BaseJobeetCategoryAffiliateForm extends BaseFormPropel
 {
   public function setup()
   {
