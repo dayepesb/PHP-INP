@@ -19,7 +19,7 @@ JobeetJob:
     is_activated: true
     token:        job_sensio_labs
     email:        job@example.com
-    expires_at:   2010-10-10
+    expires_at:   2018-10-10
 
   job_extreme_sensio:
     category_id:  design
@@ -45,7 +45,7 @@ JobeetJob:
     is_activated: true
     token:        job_extreme_sensio
     email:        job@example.com
-    expires_at:   2010-10-10
+    expires_at:   2018-10-10
 
   expired_job:
     category_id:  programming
@@ -56,7 +56,7 @@ JobeetJob:
     how_to_apply: Send your resume to lorem.ipsum [at] dolor.sit
     is_public:    true
     is_activated: true
-    expires_at:   2005-12-01
+    expires_at:   2018-12-01
     token:        job_expired
     email:        job@example.com
 
