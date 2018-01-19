@@ -1,0 +1,11 @@
+secure:
+  is_secure: on
+
+signin:
+  is_secure: on
+
+signout:
+  is_secure: on
+
+index:
+  is_secure: off
