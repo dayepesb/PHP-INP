@@ -2,6 +2,7 @@ prod:
   .settings:
     no_script_name:         on
     logging_enabled:        off
+    default_culture:        it_IT
 
 dev:
   .settings:

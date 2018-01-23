@@ -1,7 +1,12 @@
 <?php
 
-class JobeetCategory extends BaseJobeetCategory
+class JobeetCategory extends BaseJobeetCategory implements JsonSerializable
 {
+    public function jsonSerialize()
+    {
+        return $this->toArray(BasePeer::TYPE_STUDLYPHPNAME);
+    }
+
     public function __toString()
     {
         return $this->getName();
@@ -44,4 +49,5 @@ class JobeetCategory extends BaseJobeetCategory
 
         return $jobs[0];
     }
+
 }

@@ -1,17 +1,19 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" ng-app="jobeetApp">
 <head>
     <title>
         <?php if (!include_slot('title')): ?>
             Jobeet - Your best job board
         <?php endif; ?>
     </title>
-    <link rel="alternate" type="application/atom+xml" title="Latest Jobs"
-          href="<?php echo url_for('@job?sf_format=atom', true) ?>"/>
     <link rel="shortcut icon" href="/favicon.ico"/>
+    <?php use_javascript('jquery-1.2.6.min.js') ?>
+    <?php use_javascript('search.js') ?>
     <?php include_javascripts() ?>
     <?php include_stylesheets() ?>
+    <link rel="alternate" type="application/atom+xml" title="Latest Jobs"
+          href="<?php echo url_for('@job?sf_format=atom', true) ?>"/>
 </head>
 <body>
 <div id="container">
@@ -33,9 +35,11 @@
 
                 <div class="search">
                     <h2>Ask for a job</h2>
-                    <form action="" method="get">
-                        <input type="text" name="keywords" id="search_keywords"/>
+                    <form action="<?php echo url_for('@job_search') ?>" method="get">
+                        <input type="text" name="query" value="<?php echo $sf_request->getParameter('query') ?>"
+                               id="search_keywords"/>
                         <input type="submit" value="search"/>
+                        <img id="loader" src="/images/loader.gif" style="vertical-align: middle; display: none"/>
                         <div class="help">
                             Enter some keywords (city, country, position, ...)
                         </div>
@@ -53,6 +57,7 @@
         <?php if ($sf_user->hasFlash('error')): ?>
             <div class="flash_error"><?php echo $sf_user->getFlash('error') ?></div>
         <?php endif; ?>
+
         <div id="job_history">
             Recent viewed jobs:
             <ul>
@@ -81,10 +86,12 @@
                 <li class="feed">
                     <a href="<?php echo url_for('@job?sf_format=atom') ?>">Full feed</a>
                 </li>
+                <li><a href="">Jobeet API</a></li>
                 <li class="last">
                     <a href="<?php echo url_for('@affiliate_new') ?>">Become an affiliate</a>
                 </li>
             </ul>
+
         </div>
     </div>
 </div>

@@ -11,9 +11,57 @@
 class jobActions extends sfActions
 {
 
+    public function executeJsonCategory(sfWebRequest $reques)
+    {
+        $arrayForCategories = array();
+        $this->categories = JobeetCategoryPeer::getWithJobs();
+        foreach ($this->categories as $category) {
+            $arrayCategory = array();
+            $arrayCategory [] = $category;
+            $arrayCategory [] = $category->getActiveJobs();
+            $arrayForCategories[] = $arrayCategory;
+        }
+        return $this->renderText(json_encode($arrayForCategories));
+    }
+
+    public function executeJson(sfWebRequest $reques)
+    {
+
+        $this->categories = JobeetJobPeer::getActiveJobs();
+        return $this->renderText(json_encode($this->categories));
+    }
+
     public function executeIndex(sfWebRequest $request)
     {
+        if (!$request->getParameter('sf_culture')) {
+            if ($this->getUser()->isFirstRequest()) {
+                $culture = $request->getPreferredCulture(array('en', 'fr'));
+                $this->getUser()->setCulture($culture);
+                $this->getUser()->isFirstRequest(false);
+            } else {
+                $culture = $this->getUser()->getCulture();
+            }
+
+            $this->redirect('@localized_homepage');
+        }
         $this->categories = JobeetCategoryPeer::getWithJobs();
+    }
+
+    public function executeSearch(sfWebRequest $request)
+    {
+        if (!$query = $request->getParameter('query')) {
+            return $this->forward('job', 'index');
+        }
+
+        $this->jobs = JobeetJobPeer::getForLuceneQuery($query);
+
+        if ($request->isXmlHttpRequest()) {
+            if ('*' == $query || !$this->jobs) {
+                return $this->renderText('No results.');
+            } else {
+                return $this->renderPartial('job/list', array('jobs' => $this->jobs));
+            }
+        }
     }
 
     public function executeShow(sfWebRequest $request)
@@ -22,6 +70,7 @@ class jobActions extends sfActions
 
         $this->getUser()->addJobToHistory($this->job);
     }
+
     public function executeNew(sfWebRequest $request)
     {
         $job = new JobeetJob();
@@ -100,4 +149,6 @@ class jobActions extends sfActions
             $this->redirect($this->generateUrl('job_show', $job));
         }
     }
+
+
 }

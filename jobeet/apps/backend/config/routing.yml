@@ -1,10 +1,10 @@
 jobeet_affiliate:
   class: sfPropelRouteCollection
   options:
-    model:                JobeetAffiliate
-    module:               affiliate
-    prefix_path:          affiliate
-    column:               id
+    model:               JobeetAffiliate
+    module:              affiliate
+    prefix_path:         affiliate
+    column:              id
     with_wildcard_routes: true
 
 jobeet_category:

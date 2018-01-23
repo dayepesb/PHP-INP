@@ -2,5 +2,4 @@
 
 class myUser extends sfGuardSecurityUser
 {
-
 }

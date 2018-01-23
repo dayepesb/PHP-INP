@@ -2,31 +2,48 @@
 
 class JobeetAffiliate extends BaseJobeetAffiliate
 {
-    public function activate()
-    {
-        $this->setIsActive(true);
+  public function __toString()
+  {
+    return $this->getUrl();
+  }
 
-        return $this->save();
+  public function save(PropelPDO $con = null)
+  {
+    if (!$this->getToken())
+    {
+      $this->setToken(sha1($this->getEmail().rand(11111, 99999)));
     }
 
-    public function deactivate()
-    {
-        $this->setIsActive(false);
+    return parent::save($con);
+  }
 
-        return $this->save();
+  public function getActiveJobs()
+  {
+    $cas = $this->getJobeetCategoryAffiliates();
+    $categories = array();
+    foreach ($cas as $ca)
+    {
+      $categories[] = $ca->getCategoryId();
     }
 
-    public function save(PropelPDO $con = null)
-    {
-        if (!$this->getToken()) {
-            $this->setToken(sha1($this->getEmail() . rand(11111, 99999)));
-        }
+    $criteria = new Criteria();
+    $criteria->add(JobeetJobPeer::CATEGORY_ID, $categories, Criteria::IN);
+    JobeetJobPeer::addActiveJobsCriteria($criteria);
 
-        return parent::save($con);
-    }
+    return JobeetJobPeer::doSelect($criteria);
+  }
 
-    public function __toString()
-    {
-        return $this->getUrl();
-    }
+  public function activate()
+  {
+    $this->setIsActive(true);
+
+    return $this->save();
+  }
+
+  public function deactivate()
+  {
+    $this->setIsActive(false);
+
+    return $this->save();
+  }
 }

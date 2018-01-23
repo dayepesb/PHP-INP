@@ -1,3 +1,0 @@
-<td colspan="6">
-  <?php echo __('%%id%% - %%url%% - %%email%% - %%token%% - %%is_active%% - %%created_at%%', array('%%id%%' => link_to($jobeet_affiliate->getId(), 'jobeet_affiliate_edit', $jobeet_affiliate), '%%url%%' => $jobeet_affiliate->getUrl(), '%%email%%' => $jobeet_affiliate->getEmail(), '%%token%%' => $jobeet_affiliate->getToken(), '%%is_active%%' => get_partial('affiliate/list_field_boolean', array('value' => $jobeet_affiliate->getIsActive())), '%%created_at%%' => false !== strtotime($jobeet_affiliate->getCreatedAt()) ? format_date($jobeet_affiliate->getCreatedAt(), "f") : '&nbsp;'), 'messages') ?>
-</td>
