@@ -1,7 +1,7 @@
 <?php
 
 /*
- *  $Id:    AbstractPropelDataModelTask.php 1032 2008-04-29 15:22:43Z ron $
+ *  $Id: AbstractPropelDataModelTask.php 1032 2008-04-29 15:22:43Z ron $
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -438,13 +438,8 @@ abstract class AbstractPropelDataModelTask extends Task {
 						$this->includeExternalSchemas($dom, $srcDir);
 						// normalize the document using normalizer stylesheet
 
-                        $xsl = new XsltProcessor();
-                        $domxsl = new DOMDocument('1.0','UTF-8');
-                        $domDocument = $domxsl->load($this->xslFile->getAbsolutePath());
-                        if($domDocument === false)
-                            throw new BuildException("Error Loading ".$this->xslFile->getAbsolutePath());
-
-                        $xsl->importStyleSheet($domxsl);
+						$xsl = new XsltProcessor();
+						@$xsl->importStyleSheet(DomDocument::load($this->xslFile->getAbsolutePath()));
 						$transformed = $xsl->transformToDoc($dom);
 						$newXmlFilename = substr($xmlFile->getName(), 0, strrpos($xmlFile->getName(), '.')) . '-transformed.xml';
 

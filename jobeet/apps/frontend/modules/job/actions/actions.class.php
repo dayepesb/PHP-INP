@@ -11,17 +11,37 @@
 class jobActions extends sfActions
 {
 
+    public function executeJobView(sfWebRequest $reques)
+    {
+        $id = $reques->getParameter('id');
+        $this->listJobs = JobeetJobPeer::getActiveJobs();
+        //return $this->renderText(json_encode($this->listJobs[0]->getId()));
+        foreach ($this->listJobs as $job){
+            if($id==$job->getId()){
+                return $this->renderText(json_encode($job));
+            }
+        }
+    }
+
     public function executeJsonCategory(sfWebRequest $reques)
     {
-        $arrayForCategories = array();
-        $this->categories = JobeetCategoryPeer::getWithJobs();
-        foreach ($this->categories as $category) {
-            $arrayCategory = array();
-            $arrayCategory [] = $category;
-            $arrayCategory [] = $category->getActiveJobs();
-            $arrayForCategories[] = $arrayCategory;
+        if ($reques->hasParameter('slug')) {
+            $category = JobeetCategoryPeer::getForSlug($reques->getParameter('slug'));
+            $list = $category->getActiveJobs($category->countActiveJobs());
+            $jobs = array();
+            $jobs [] = $category;
+            $jobs [] = $list;
+        } else {
+            $jobs = array();
+            $this->categories = JobeetCategoryPeer::getWithJobs();
+            foreach ($this->categories as $category) {
+                $arrayCategory = array();
+                $arrayCategory [] = $category;
+                $arrayCategory [] = $category->getActiveJobs();
+                $jobs[] = $arrayCategory;
+            }
         }
-        return $this->renderText(json_encode($arrayForCategories));
+        return $this->renderText(json_encode($jobs));
     }
 
     public function executeJson(sfWebRequest $reques)

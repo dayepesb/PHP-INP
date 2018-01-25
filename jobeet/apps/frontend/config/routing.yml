@@ -2,6 +2,14 @@ job_json:
   url:   /job/json
   param: { module: job, action: json }
 
+job_edit:
+  url:   /job/edit
+  param: { module: job, action: edit }
+
+job_view_json:
+  url:   /job/view/json
+  param: { module: job, action: jobView }
+
 job_category_json:
   url:   /job/category/json
   param: { module: job, action: jsonCategory }

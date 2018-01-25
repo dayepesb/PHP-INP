@@ -1,11 +1,8 @@
 secure:
-  is_secure: on
+  is_secure: off
 
 signin:
-  is_secure: on
+  is_secure: off
 
 signout:
-  is_secure: on
-
-index:
   is_secure: off

@@ -1,3 +1,18 @@
 <div id="jobsList">
-<p>{{$ctrl.jobsList}}</p>
+    <div ng-repeat="type in $ctrl.jobsList" class="category_{{type[0].slug}}">
+        <div class="category">
+            <div class="feed">
+                <a>Feed</a>
+            </div>
+            <h1><a ng-href="#/category/{{type[0].slug}}">{{type[0].slug}}</a></h1>
+        </div>
+        <table class="jobs">
+            <tr ng-class="{'even':$even , 'odd':$odd}" ng-repeat="job in type[1]">
+                <td class="location">{{job.location}}</td>
+                <td class="position"><a ng-href="#/job/view/{{job.id}}">{{job.position}}</a></td>
+                <td class="company">{{job.company}}</td>
+            </tr>
+        </table>
+
+    </div>
 </div>

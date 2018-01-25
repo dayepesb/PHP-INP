@@ -1,0 +1,37 @@
+<!--<a>{{$ctrl.jobView}}</a>-->
+<div class="content">
+    <div id="job">
+        <h1>{{$ctrl.jobView.company}}</h1>
+        <h2>{{$ctrl.jobView.location}}</h2>
+        <h3>
+            {{$ctrl.jobView.position}}
+            <small> - {{$ctrl.jobView.type}}</small>
+        </h3>
+
+        <!--<?php if ($job->getLogo()): ?>-->
+        <div class="logo" ng-if="$ctrl.jobView.logo!=null">
+            <a ng-href="{{$ctrl.jobView.url}}">
+                <img ng-src="/uploads/jobs/{{$ctrl.jobView.logo}}"/>
+            </a>
+        </div>
+        <div class="logo" ng-if="$ctrl.jobView.logo==null">
+            <a ng-href="{{$ctrl.jobView.url}}">
+                <img ng-src="/uploads/jobs/extreme-sensio.gif"/>
+            </a>
+        </div>
+
+        <div class="description">
+            <p>{{$ctrl.jobView.description}}</p>
+        </div>
+
+        <h4>How to apply?</h4>
+        <p class="how_to_apply">{{$ctrl.jobView.howToApply}}</p>
+
+        <div class="meta">
+            <small>posted on {{$ctrl.jobView.createdAt}}</small>
+        </div>
+        <div style="padding: 20px 10px">
+            <a ng-href="#/job/edit/{{$ctrl.jobView.id}}">Edit</a>
+        </div>
+    </div>
+</div>

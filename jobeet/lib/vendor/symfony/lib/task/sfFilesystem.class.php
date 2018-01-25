@@ -221,7 +221,7 @@ class sfFilesystem
     if (!$ok)
     {
       $this->logSection('link+', $targetDir);
-      symlink($originDir, $targetDir);
+      @symlink($originDir, $targetDir);
     }
   }
 

@@ -37,5 +37,7 @@
 
   <div style="padding: 20px 0">
     <a href="<?php echo url_for('job_edit', $job) ?>">Edit</a>
+    <a href="<?php echo url_for('job_edit', $job) ?>">Edit</a>
+    <a href="<?php echo url_for('job_edit', $job) ?>">Edit</a>
   </div>
 </div>

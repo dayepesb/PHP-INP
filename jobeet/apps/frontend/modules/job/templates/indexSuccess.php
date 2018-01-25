@@ -1,11 +1,21 @@
 <?php use_stylesheet('jobs.css') ?>
 <?php use_javascript('../bower_components/jquery/dist/jquery.js') ?>
 <?php use_javascript('../bower_components/angular/angular.js') ?>
+<?php use_javascript('../bower_components/angular-route/angular-route.js') ?>
 <?php use_javascript('../bower_components/angular-resource/angular-resource.js') ?>
 <?php use_javascript('../homepage/app/list/list.module.js') ?>
+<?php use_javascript('../homepage/app/listAll/listAll.module.js') ?>
+<?php use_javascript('../homepage/app/viewJob/viewJob.module.js') ?>
+<?php use_javascript('../homepage/app/edit/editJob.module.js') ?>
 <?php use_javascript('../homepage/app/list/list.component.js') ?>
+<?php use_javascript('../homepage/app/listAll/listAll.component.js') ?>
+<?php use_javascript('../homepage/app/viewJob/viewJob.component.js') ?>
+<?php use_javascript('../homepage/app/form/newJob.component.js') ?>
+<?php use_javascript('../homepage/app/edit/editJob.component.js') ?>
 <?php use_javascript('../homepage/app/app.js') ?>
+<?php use_javascript('../homepage/app/app.config.js') ?>
 <div id="jobs">
+    <!--
     <?php foreach ($categories as $category): ?>
         <div class="category_<?php echo Jobeet::slugify($category->getname()) ?>">
             <div class="category">
@@ -26,6 +36,7 @@
             <?php endif; ?>
         </div>
     <?php endforeach; ?>
-
     <list-jobs></list-jobs>
+     -->
+    <div ng-view></div>
 </div>

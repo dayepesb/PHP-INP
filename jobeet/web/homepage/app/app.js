@@ -1,4 +1,8 @@
 'use strict';
 angular.module('jobeetApp', [
-    'list'
+    'ngRoute',
+    'list',
+    'listAll',
+    'viewJob',
+    'editJob'
 ]);
