@@ -8,6 +8,7 @@ angular
 var app = angular.module('viewJob');
 app.controller('newJobController', ['$http', '$scope', function ($http, $scope) {
     $scope.saveJob = function (job) {
+        var self = this;
         var data = {
             category: job.category,
             type: job.type,
@@ -20,11 +21,11 @@ app.controller('newJobController', ['$http', '$scope', function ($http, $scope) 
             ispublic: job.isPublic,
             mail: job.mail
         };
-        $http.post('/new/post',data)
+        $http.post('/new/post', data)
             .then(function (response) {
                 console.log(response.data);
-            }, function (response) {
-                console.log(response.data)
+                self.job = response.data;
+                location.replace('/#/job/view/'+self.job.id);
             });
     }
 }]);

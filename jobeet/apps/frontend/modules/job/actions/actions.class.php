@@ -10,6 +10,20 @@
  */
 class jobActions extends sfActions
 {
+    public function executeJobDelete(sfWebRequest $reques){
+        $input = file_get_contents('php://input');
+        $decode = json_decode($input);
+        $id = $decode->id;
+        $this->listJobs = JobeetJobPeer::getActiveJobs();
+        //return $this->renderText(json_encode($this->listJobs[0]->getId()));
+        foreach ($this->listJobs as $job) {
+            if ($id == $job->getId()) {
+                $job->delete();
+                return $this->renderText('delete');
+            }
+        }
+        return $this->renderText('no delete');
+    }
     public function executeNewPost(sfWebRequest $reques)
     {
         //POST :  post save job
@@ -25,8 +39,9 @@ class jobActions extends sfActions
         $job->setDescription($decode->description);
         $job->setHowToApply($decode->howtoapply);
         $job->setIsPublic($decode->ispublic);
+        $job->setIsActivated(true);
         $job->save();
-        return $this->renderText(json_encode($decode));
+        return $this->renderText(json_encode($job));
     }
 
     public function executeCategoryJob(sfWebRequest $reques)

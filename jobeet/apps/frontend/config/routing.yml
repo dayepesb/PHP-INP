@@ -2,6 +2,10 @@ new_post:
   url:   /new/post
   param: { module: job, action: newPost }
 
+delete_job_post:
+  url:   /job/delete
+  param: { module: job, action: jobDelete }
+
 job_json:
   url:   /job/json
   param: { module: job, action: json }
