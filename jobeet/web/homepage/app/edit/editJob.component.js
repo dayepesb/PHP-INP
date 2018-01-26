@@ -7,6 +7,9 @@ angular.module('editJob')
            var self = this;
            $http.get('/job/view/json?id='+$routeParams.id).then( function(response){
                self.edit = response.data;
+               $http.get('/category/job/json?id='+self.edit.categoryId).then( function(response){
+                   self.category = response.data;
+               });
            });
        }]
     });

@@ -5,24 +5,24 @@
             <tfoot>
             <tr>
                 <td colspan="2">
-                    <input type="submit" value="edit" ng-click="saveJob(job)">
+                    <input type="submit" value="Save Job" ng-click="saveJob(job)">
                 </td>
             </tr>
             </tfoot>
             <tbody>
             <tr>
                 <th><label for="job_category_id">Category</label></th>
-                <td><select ng-model="job.category" id="job_category_id">
-                    <option value="Design">Design</option>
-                    <option value="Programming">Programming</option>
-                    <option value="Manager">Manager</option>
-                    <option value="Administrator">Administrator</option>
+                <td><select ng-model="job.category" id="job_category_id" required>
+                    <option value="5">Design</option>
+                    <option value="6">Programming</option>
+                    <option value="7">Manager</option>
+                    <option value="8">Administrator</option>
                 </select></td>
             </tr>
             <tr>
                 <th><label>Type</label></th>
                 <td>
-                    <ul class="radio_list">
+                    <ul class="radio_list" required>
                         <li><input name="job[type]" type="radio" value="full-time" id="job_type_full-time"
                                    checked="checked" ng-model="job.type" value="Full time">&nbsp;<label
                                 for="job_type_full-time">Full time</label></li>
@@ -37,7 +37,7 @@
             </tr>
             <tr>
                 <th><label for="job_company">Company</label></th>
-                <td><input type="text" name="job[company]" id="job_company" ng-model="job.company"></td>
+                <td><input type="text" name="job[company]" id="job_company" ng-model="job.company" required></td>
             </tr>
             <tr>
                 <th><label for="job_logo">Company logo</label></th>
@@ -45,36 +45,36 @@
             </tr>
             <tr>
                 <th><label for="job_url">Url</label></th>
-                <td><input type="text" name="job[url]" id="job_url" ng-model="job.url"></td>
+                <td><input type="text" name="job[url]" id="job_url" ng-model="job.url" required></td>
             </tr>
             <tr>
                 <th><label for="job_position">Position</label></th>
-                <td><input type="text" name="job[position]" id="job_position" ng-model="job.position"></td>
+                <td><input type="text" name="job[position]" id="job_position" ng-model="job.position" required></td>
             </tr>
             <tr>
                 <th><label for="job_location">Location</label></th>
-                <td><input type="text" name="job[location]" id="job_location" ng-model="job.location"></td>
+                <td><input type="text" name="job[location]" id="job_location" ng-model="job.location" required></td>
             </tr>
             <tr>
                 <th><label for="job_description">Description</label></th>
                 <td><textarea rows="4" cols="30" name="job[description]" id="job_description"
-                              ng-model="job.description"></textarea></td>
+                              ng-model="job.description" required></textarea></td>
             </tr>
             <tr>
                 <th><label for="job_how_to_apply">How to apply?</label></th>
                 <td><textarea rows="4" cols="30" name="job[how_to_apply]" id="job_how_to_apply"
-                              ng-model="job.howToApply"></textarea></td>
+                              ng-model="job.howToApply" required></textarea></td>
             </tr>
             <tr>
                 <th><label for="job_is_public">Public?</label></th>
                 <td><input type="checkbox" name="job[is_public]" checked="checked" id="job_is_public"
-                           ng-model="job.isPublic"><br>Whether the
+                           ng-model="job.isPublic" required><br>Whether the
                     job can also be published on affiliate websites or not.
                 </td>
             </tr>
             <tr>
                 <th><label for="job_email">Email</label></th>
-                <td><input type="email" name="job[email]" id="job_email">
+                <td><input type="email" name="job[email]" ng-model="job.mail" id="job_email" required>
                     <input type="hidden" name="job[id]" id="job_id">
                     <input type="hidden" name="job[_csrf_token]" value="f1f7d971f3a1ee9833b73a61b59bae06"
                            id="job__csrf_token"></td>

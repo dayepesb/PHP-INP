@@ -1,10 +1,14 @@
+new_post:
+  url:   /new/post
+  param: { module: job, action: newPost }
+
 job_json:
   url:   /job/json
   param: { module: job, action: json }
 
-job_edit:
-  url:   /job/edit
-  param: { module: job, action: edit }
+category_job_json:
+  url:   /category/job/json
+  param: { module: job, action: categoryJob }
 
 job_view_json:
   url:   /job/view/json

@@ -10,14 +10,46 @@
  */
 class jobActions extends sfActions
 {
+    public function executeNewPost(sfWebRequest $reques)
+    {
+        //POST :  post save job
+        $input = file_get_contents('php://input');
+        $decode = json_decode($input);
+        $job = new JobeetJob;
+        $job->setCategoryId($decode->category);
+        $job->setType($decode->type);
+        $job->setCompany($decode->company);
+        $job->setUrl($decode->url);
+        $job->setPosition($decode->position);
+        $job->setLocation($decode->location);
+        $job->setDescription($decode->description);
+        $job->setHowToApply($decode->howtoapply);
+        $job->setIsPublic($decode->ispublic);
+        $job->save();
+        return $this->renderText(json_encode($decode));
+    }
+
+    public function executeCategoryJob(sfWebRequest $reques)
+    {
+        // GET : get category for id
+        // PAMETERS : { id: {{ id cateogry }} }
+        $id = $reques->getParameter('id');
+        $this->categories = JobeetCategoryPeer::getWithJobs();
+        foreach ($this->categories as $category) {
+            if ($id == $category->getId())
+                return $this->renderText(json_encode($category));
+        }
+    }
 
     public function executeJobView(sfWebRequest $reques)
     {
+        // GET : get job
+        // PAMETERS : { id: {{ id job }} }
         $id = $reques->getParameter('id');
         $this->listJobs = JobeetJobPeer::getActiveJobs();
         //return $this->renderText(json_encode($this->listJobs[0]->getId()));
-        foreach ($this->listJobs as $job){
-            if($id==$job->getId()){
+        foreach ($this->listJobs as $job) {
+            if ($id == $job->getId()) {
                 return $this->renderText(json_encode($job));
             }
         }
@@ -25,6 +57,9 @@ class jobActions extends sfActions
 
     public function executeJsonCategory(sfWebRequest $reques)
     {
+        // GET : get category for slug
+        // PAMETERS : { slug: {{ slug category }} }
+
         if ($reques->hasParameter('slug')) {
             $category = JobeetCategoryPeer::getForSlug($reques->getParameter('slug'));
             $list = $category->getActiveJobs($category->countActiveJobs());
@@ -46,7 +81,7 @@ class jobActions extends sfActions
 
     public function executeJson(sfWebRequest $reques)
     {
-
+        // GET : get all Jobs
         $this->categories = JobeetJobPeer::getActiveJobs();
         return $this->renderText(json_encode($this->categories));
     }
