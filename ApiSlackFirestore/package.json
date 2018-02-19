@@ -1,0 +1,18 @@
+{
+  "name": "empanadas",
+  "version": "1.0.0",
+  "description": "Aplicación para empanadas Slack",
+  "main": "index.js",
+  "dependencies": {
+    "curl": "^0.1.4",
+    "firebase-admin": "^5.4.0",
+    "https-post": "^0.1.1",
+    "request": "^2.83.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
