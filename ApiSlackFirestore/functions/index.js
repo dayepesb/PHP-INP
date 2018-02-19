@@ -17,6 +17,21 @@ let tokenChatEphimeral = '';
 let idChannelGeneral = '';
 let urlMessageChatEphimeral = '';
 
+//Config
+exports.updateInfo = functions.https.onRequest((req, res) => {
+    db.collection('Config').doc('Firebase').set({});
+    db.collection('Config').doc('Slack').set({
+        pattyPattern: ':dumpling:',
+        accessToken: 'tokenAccesApiSlack',
+        urlUserSlack: 'slack.com/api/users.info',
+        urlMessageSlack: 'URLMessageSlack',
+        tokenUsers: 'TokenUserSlack',
+        idChannelGeneral: 'idChannel',
+        tokenChatEphimeral: 'TokenApiSlack',
+        urlMessageChatEphimeral: 'https://slack.com/api/chat.postEphemeral'
+    });
+});
+
 exports.sumarYConfigurar = functions.https.onRequest((req, res) => {
     referenceConfig.doc('Slack').get().then(doc => {
         patternPatty = doc.data().pattyPattern;
